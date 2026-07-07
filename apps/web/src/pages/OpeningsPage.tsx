@@ -70,7 +70,12 @@ export function OpeningsPage() {
   const pageDetails = selected
     ? `${selected.title}, шаг ${step + 1}/${selected.steps.length}${completed ? ', дебют пройден' : ''}${feedback ? ` — ${feedback.replace(/^✓\s*/, '')}` : ''}`
     : 'Список дебютов';
-  usePageContextSync('Дебюты', selected ? fen : undefined, pageDetails);
+  usePageContextSync(
+    'Дебюты',
+    selected ? fen : undefined,
+    pageDetails,
+    selected?.player_color
+  );
 
   useEffect(() => {
     api.getOpenings().then(setOpenings);

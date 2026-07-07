@@ -41,7 +41,12 @@ export function GamePage({ mode }: GamePageProps) {
   const gameId = id ? parseInt(id, 10) : 0;
 
   const gameDetails = `${mode === 'coach' ? 'Тренер' : 'Бот'} ${botElo}, вы играете ${playerColor === 'white' ? 'белыми' : 'чёрными'}${moves.length ? `, ходы: ${moves.join(' ')}` : ''}${status ? ` — ${status}` : ''}`;
-  usePageContextSync(mode === 'coach' ? 'Игра с тренером' : 'Игра с ботом', fen, gameDetails);
+  usePageContextSync(
+    mode === 'coach' ? 'Игра с тренером' : 'Игра с ботом',
+    fen,
+    gameDetails,
+    playerColor
+  );
 
   useEffect(() => {
     preloadBotEngine();

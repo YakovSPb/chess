@@ -257,6 +257,7 @@ export const api = {
     page?: string;
     fen?: string;
     details?: string;
+    player_color?: 'white' | 'black';
     history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   }) =>
     request<{ message: string }>('/coach/chat', {

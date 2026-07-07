@@ -5,6 +5,7 @@ export interface PageContextState {
   page: string;
   fen?: string;
   details?: string;
+  player_color?: 'white' | 'black';
 }
 
 interface PageContextValue {
@@ -64,11 +65,16 @@ export function usePageContext() {
   return ctx;
 }
 
-export function usePageContextSync(page: string, fen?: string, details?: string) {
+export function usePageContextSync(
+  page: string,
+  fen?: string,
+  details?: string,
+  player_color?: 'white' | 'black'
+) {
   const { setPageContext } = usePageContext();
 
   useEffect(() => {
-    setPageContext({ page, fen, details });
+    setPageContext({ page, fen, details, player_color });
     return () => setPageContext(null);
-  }, [page, fen, details, setPageContext]);
+  }, [page, fen, details, player_color, setPageContext]);
 }

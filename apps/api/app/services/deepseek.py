@@ -310,11 +310,15 @@ class DeepSeekService:
         page: str,
         fen: str | None,
         details: str | None,
+        player_color: str | None,
         history: list[dict[str, str]],
         user_rating: int,
     ) -> str:
         system = CHAT_SYSTEM_PROMPT.format(user_rating=user_rating)
         context_parts = [f"Страница: {page or 'неизвестно'}"]
+        if player_color in ("white", "black"):
+            color_label = "белыми" if player_color == "white" else "чёрными"
+            context_parts.append(f"Игрок играет {color_label}")
         if details:
             context_parts.append(f"Детали: {details}")
         if fen:

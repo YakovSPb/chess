@@ -60,6 +60,7 @@ async def coach_chat(
         page=data.page,
         fen=data.fen,
         details=data.details,
+        player_color=data.player_color,
         history=[{"role": m.role, "content": m.content} for m in data.history],
         user_rating=int(user.puzzle_rating),
     )

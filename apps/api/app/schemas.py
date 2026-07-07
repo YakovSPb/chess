@@ -152,6 +152,7 @@ class CoachChatRequest(BaseModel):
     page: str = ""
     fen: str | None = None
     details: str | None = None
+    player_color: str | None = None
     history: list[CoachChatMessage] = Field(default_factory=list)
 
 

@@ -39,6 +39,7 @@ export function FooterChat() {
         page: context.page,
         fen: context.fen,
         details: context.details,
+        player_color: context.player_color,
         history: messages,
       });
       setMessages([...history, { role: 'assistant', content: res.message }]);
@@ -49,7 +50,13 @@ export function FooterChat() {
     }
   };
 
-  const contextLine = [context.page, context.details].filter(Boolean).join(' · ');
+  const colorLabel =
+    context.player_color === 'white'
+      ? 'белые'
+      : context.player_color === 'black'
+        ? 'чёрные'
+        : '';
+  const contextLine = [context.page, colorLabel, context.details].filter(Boolean).join(' · ');
 
   return (
     <footer className="border-t border-gray-700 bg-[var(--bg-secondary)] shrink-0">
