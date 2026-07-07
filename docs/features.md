@@ -1,0 +1,50 @@
+# Функции ChessTrain
+
+## 1. Задачи (Puzzles)
+
+- Источник: [Lichess puzzle database](https://database.lichess.org/#puzzles)
+- Адаптивная выдача по рейтингу пользователя
+- Фильтр по темам: вилка, связка, мат, эндшпиль и др.
+- Daily puzzle, streak, рейтинг Glicko
+
+## 2. Игра с ботом
+
+- 6 уровней: 800, 1200, 1600, 2000, 2400, 2800 ELO
+- Stockfish `UCI_LimitStrength` + `UCI_Elo`
+- Контроль времени: без часов, 3+2, 5+0, 10+0
+- Сохранение PGN
+
+## 3. Тренер (Coach)
+
+- Режим игры с подсказками OpenAI
+- Кнопки: «Подсказка», «Почему плохо?»
+- 3 уровня подсказок (идея → направление → точный ход)
+- Резюме партии после игры
+
+## 4. Обучение
+
+- 8 уроков: дебюты (Italian, Sicilian, London), эндшпиль, тактика
+- Интерактивный формат «сделай ход»
+- OpenAI расширяет объяснения по запросу
+
+## 5. Отчёт по партии
+
+- График оценки Stockfish
+- Accuracy %
+- Классификация: good / inaccuracy / mistake / blunder
+- Ключевые моменты (3 худших хода)
+- Резюме DeepSeek (в режиме тренера)
+
+## Dashboard
+
+- Puzzle rating, streak, accuracy за 30 дней
+- Слабые темы
+- Рекомендация на день
+
+## v2 (планируется)
+
+- Онлайн multiplayer
+- Импорт PGN с Lichess/chess.com
+- Opening explorer
+- Puzzle Storm / Racer
+- PWA
