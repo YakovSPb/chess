@@ -5,7 +5,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -30,19 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.me());
   };
 
-  const register = async (username: string, email: string, password: string) => {
-    const { access_token } = await api.register(username, email, password);
-    localStorage.setItem('token', access_token);
-    setUser(await api.me());
-  };
-
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

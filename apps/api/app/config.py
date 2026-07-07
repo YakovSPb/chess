@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-secret"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7
+    admin_username: str = "admin"
+    admin_password: str = "Porter777"
     openai_api_key: str = ""
     openai_api_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"

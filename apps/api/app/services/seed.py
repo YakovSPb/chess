@@ -1,10 +1,7 @@
 from app.auth import hash_password
+from app.config import settings
 from app.database import SessionLocal
 from app.models import User
-
-TEST_ADMIN_USERNAME = "admin"
-TEST_ADMIN_EMAIL = "admin@admin.com"
-TEST_ADMIN_PASSWORD = "admin"
 
 
 def seed_test_admin() -> None:
@@ -12,21 +9,24 @@ def seed_test_admin() -> None:
     try:
         existing = (
             db.query(User)
-            .filter((User.username == TEST_ADMIN_USERNAME) | (User.email == TEST_ADMIN_EMAIL))
+            .filter(
+                (User.username == settings.admin_username)
+                | (User.email == f"{settings.admin_username}@admin.com")
+            )
             .first()
         )
         if existing:
-            existing.username = TEST_ADMIN_USERNAME
-            existing.email = TEST_ADMIN_EMAIL
-            existing.hashed_password = hash_password(TEST_ADMIN_PASSWORD)
+            existing.username = settings.admin_username
+            existing.email = f"{settings.admin_username}@admin.com"
+            existing.hashed_password = hash_password(settings.admin_password)
             db.commit()
             return
 
         db.add(
             User(
-                username=TEST_ADMIN_USERNAME,
-                email=TEST_ADMIN_EMAIL,
-                hashed_password=hash_password(TEST_ADMIN_PASSWORD),
+                username=settings.admin_username,
+                email=f"{settings.admin_username}@admin.com",
+                hashed_password=hash_password(settings.admin_password),
             )
         )
         db.commit()
