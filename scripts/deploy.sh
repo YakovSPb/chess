@@ -9,7 +9,8 @@ git reset --hard origin/main
 
 # --- API ---
 cd "$ROOT/apps/api"
-if [ ! -d .venv ]; then
+if [ ! -x .venv/bin/pip ]; then
+  rm -rf .venv
   python3 -m venv .venv
 fi
 .venv/bin/pip install -q -r requirements.txt
