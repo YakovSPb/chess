@@ -195,7 +195,11 @@ export function GamePage({ mode }: GamePageProps) {
   const handleMove = (from: string, to: string, promotion?: string) => {
     if (!isPlayerTurn() || thinking) return false;
     try {
-      const move = chess.move({ from, to, promotion: promotion as 'q' | undefined });
+      const move = chess.move({
+        from,
+        to,
+        promotion: promotion as 'q' | 'r' | 'b' | 'n' | undefined,
+      });
       if (!move) return false;
       const fenAfterPlayer = chess.fen();
       setFen(fenAfterPlayer);

@@ -1,8 +1,18 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Chessboard } from 'react-chessboard';
+import { Chess, type Square } from 'chess.js';
 import type { CSSProperties } from 'react';
+import { PromotionDialog } from './PromotionDialog';
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1'] as const;
+
+type PromotionPiece = 'q' | 'r' | 'b' | 'n';
+
+interface PendingPromotion {
+  from: string;
+  to: string;
+}
 
 interface ChessBoardViewProps {
   fen: string;
@@ -13,6 +23,41 @@ interface ChessBoardViewProps {
   squareStyles?: Record<string, CSSProperties>;
 }
 
+function buildMoveHighlights(
+  fen: string,
+  selectedSquare: string,
+  externalStyles?: Record<string, CSSProperties>
+): Record<string, CSSProperties> {
+  const chess = new Chess(fen);
+  const moves = chess.moves({ square: selectedSquare as Square, verbose: true });
+  const styles: Record<string, CSSProperties> = { ...externalStyles };
+
+  styles[selectedSquare] = {
+    ...styles[selectedSquare],
+    backgroundColor: 'rgba(255, 255, 51, 0.5)',
+  };
+
+  for (const move of moves) {
+    const targetPiece = chess.get(move.to as Square);
+    const isCapture = Boolean(targetPiece);
+    styles[move.to] = {
+      ...styles[move.to],
+      background: isCapture
+        ? 'radial-gradient(circle, transparent 55%, rgba(0, 0, 0, 0.25) 56%)'
+        : 'radial-gradient(circle, rgba(0, 0, 0, 0.2) 22%, transparent 23%)',
+    };
+  }
+
+  return styles;
+}
+
+function needsPromotion(fen: string, from: string, to: string): boolean {
+  const chess = new Chess(fen);
+  return chess
+    .moves({ square: from as Square, verbose: true })
+    .some((move) => move.to === to && move.promotion);
+}
+
 export function ChessBoardView({
   fen,
   orientation = 'white',
@@ -21,12 +66,93 @@ export function ChessBoardView({
   boardWidth = 480,
   squareStyles,
 }: ChessBoardViewProps) {
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
+
+  useEffect(() => {
+    setSelectedSquare(null);
+    setPendingPromotion(null);
+  }, [fen]);
+
   const labelGutter = Math.max(18, Math.round(boardWidth * 0.045));
   const squareSize = boardWidth / 8;
   const totalWidth = labelGutter + boardWidth;
   const totalHeight = boardWidth + labelGutter;
   const files = orientation === 'white' ? FILES : [...FILES].reverse();
   const ranks = orientation === 'white' ? RANKS : [...RANKS].reverse();
+
+  const promotionColor = useMemo((): 'w' | 'b' => {
+    if (!pendingPromotion) return fen.includes(' w ') ? 'w' : 'b';
+    const chess = new Chess(fen);
+    const piece = chess.get(pendingPromotion.from as Square);
+    return piece?.color ?? (fen.includes(' w ') ? 'w' : 'b');
+  }, [fen, pendingPromotion]);
+
+  const mergedSquareStyles = useMemo(() => {
+    if (!selectedSquare || pendingPromotion) return squareStyles;
+    return buildMoveHighlights(fen, selectedSquare, squareStyles);
+  }, [fen, selectedSquare, pendingPromotion, squareStyles]);
+
+  const tryMove = useCallback(
+    (from: string, to: string, promotion?: PromotionPiece): boolean => {
+      if (!onMove) return false;
+      const success = onMove(from, to, promotion);
+      if (success) {
+        setSelectedSquare(null);
+        setPendingPromotion(null);
+      }
+      return success;
+    },
+    [onMove]
+  );
+
+  const handleSquareClick = useCallback(
+    ({ square, piece }: { square: string; piece: { pieceType: string } | null }) => {
+      if (!allowMoves || !onMove || pendingPromotion) return;
+
+      if (selectedSquare === square) {
+        setSelectedSquare(null);
+        return;
+      }
+
+      if (selectedSquare) {
+        const chess = new Chess(fen);
+        const legalMoves = chess.moves({ square: selectedSquare as Square, verbose: true });
+        const canMoveTo = legalMoves.some((move) => move.to === square);
+
+        if (!canMoveTo) {
+          if (piece) {
+            const pieceMoves = chess.moves({ square: square as Square, verbose: true });
+            if (pieceMoves.length > 0) {
+              setSelectedSquare(square);
+            } else {
+              setSelectedSquare(null);
+            }
+          } else {
+            setSelectedSquare(null);
+          }
+          return;
+        }
+
+        if (needsPromotion(fen, selectedSquare, square)) {
+          setPendingPromotion({ from: selectedSquare, to: square });
+          return;
+        }
+
+        tryMove(selectedSquare, square);
+        return;
+      }
+
+      if (!piece) return;
+
+      const chess = new Chess(fen);
+      const legalMoves = chess.moves({ square: square as Square, verbose: true });
+      if (legalMoves.length > 0) {
+        setSelectedSquare(square);
+      }
+    },
+    [allowMoves, fen, onMove, pendingPromotion, selectedSquare, tryMove]
+  );
 
   const labelStyle: CSSProperties = {
     color: 'var(--text-secondary)',
@@ -63,6 +189,7 @@ export function ChessBoardView({
       ))}
 
       <div
+        className="relative"
         style={{
           gridColumn: '2 / 10',
           gridRow: '1 / 9',
@@ -74,13 +201,10 @@ export function ChessBoardView({
           options={{
             position: fen,
             boardOrientation: orientation,
-            allowDragging: allowMoves,
+            allowDragging: false,
             showNotation: false,
-            squareStyles,
-            onPieceDrop: ({ sourceSquare, targetSquare }) => {
-              if (!onMove || !targetSquare) return false;
-              return onMove(sourceSquare, targetSquare);
-            },
+            squareStyles: mergedSquareStyles,
+            onSquareClick: handleSquareClick,
             darkSquareStyle: { backgroundColor: '#769656' },
             lightSquareStyle: { backgroundColor: '#eeeed2' },
             boardStyle: {
@@ -90,6 +214,16 @@ export function ChessBoardView({
             },
           }}
         />
+
+        {pendingPromotion && (
+          <PromotionDialog
+            square={pendingPromotion.to}
+            color={promotionColor}
+            orientation={orientation}
+            onSelect={(piece) => tryMove(pendingPromotion.from, pendingPromotion.to, piece)}
+            onCancel={() => setPendingPromotion(null)}
+          />
+        )}
       </div>
 
       {files.map((file, index) => (
