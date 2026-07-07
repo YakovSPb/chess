@@ -35,7 +35,7 @@ async def lifespan(_app: FastAPI):
     try:
         added = ensure_puzzles(db)
         if added:
-            print(f"Seeded {added} puzzles (total target: 2500+)")
+            print(f"Seeded {added} puzzles (target: 500+ unique)")
     finally:
         db.close()
     yield

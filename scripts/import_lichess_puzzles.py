@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, SessionLocal, engine
 from app.models import Puzzle
-from app.services.seed_puzzles import BASE_SAMPLES, ensure_puzzles
+from app.services.seed_puzzles import BASE_SAMPLES, deduplicate_puzzles, ensure_puzzles
 
 # Moves in UCI format (as in Lichess database)
 SAMPLE_PUZZLES = BASE_SAMPLES
@@ -91,11 +91,15 @@ def main():
     parser.add_argument("--max", type=int, default=100000, help="Max puzzles to import")
     parser.add_argument("--seed-only", action="store_true", help="Only seed sample puzzles")
     parser.add_argument("--force", action="store_true", help="Update existing sample puzzles")
+    parser.add_argument("--dedup", action="store_true", help="Remove duplicate puzzles (same fen+moves)")
     args = parser.parse_args()
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
+        if args.dedup:
+            removed = deduplicate_puzzles(db)
+            print(f"Removed {removed} duplicate puzzles")
         if args.seed_only or args.csv is None:
             n = seed_samples(db, force=args.force)
             print(f"Seeded {n} sample puzzles")

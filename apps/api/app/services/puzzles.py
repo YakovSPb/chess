@@ -29,6 +29,18 @@ def get_solved_puzzle_ids(db: Session, user_id: int) -> set[int]:
     return {row[0] for row in rows}
 
 
+def _unique_puzzle_ids_subquery(db: Session, min_rating: int, max_rating: int):
+    return (
+        db.query(func.min(Puzzle.id).label("id"))
+        .filter(
+            Puzzle.rating >= min_rating,
+            Puzzle.rating <= max_rating,
+        )
+        .group_by(Puzzle.fen, Puzzle.moves)
+        .subquery()
+    )
+
+
 def get_levels_progress(db: Session, user: User | None) -> list[dict]:
     from app.services.puzzle_levels import PUZZLE_LEVELS
 
@@ -38,15 +50,8 @@ def get_levels_progress(db: Session, user: User | None) -> list[dict]:
 
     result = []
     for level in PUZZLE_LEVELS:
-        puzzles = (
-            db.query(Puzzle.id)
-            .filter(
-                Puzzle.rating >= level["min_rating"],
-                Puzzle.rating <= level["max_rating"],
-            )
-            .all()
-        )
-        puzzle_ids = [p[0] for p in puzzles]
+        unique_ids = _unique_puzzle_ids_subquery(db, level["min_rating"], level["max_rating"])
+        puzzle_ids = [row[0] for row in db.query(unique_ids.c.id).all()]
         solved_count = sum(1 for pid in puzzle_ids if pid in solved_ids)
         result.append(
             {
@@ -72,12 +77,10 @@ def get_puzzles_by_level(db: Session, level_id: str, user: User | None) -> list[
     if user:
         solved_ids = get_solved_puzzle_ids(db, user.id)
 
+    unique_ids = _unique_puzzle_ids_subquery(db, level["min_rating"], level["max_rating"])
     puzzles = (
         db.query(Puzzle)
-        .filter(
-            Puzzle.rating >= level["min_rating"],
-            Puzzle.rating <= level["max_rating"],
-        )
+        .filter(Puzzle.id.in_(db.query(unique_ids.c.id)))
         .order_by(Puzzle.rating, Puzzle.id)
         .all()
     )
