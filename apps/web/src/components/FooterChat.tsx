@@ -66,14 +66,17 @@ export function FooterChat() {
         className="w-full px-4 py-2 flex items-center justify-between text-sm hover:bg-[var(--bg-card)] transition-colors"
       >
         <span className="font-medium text-[var(--accent)]">AI-чат</span>
-        <span className="text-[var(--text-secondary)] truncate ml-4">
+        <span className="ml-4 hidden truncate text-[var(--text-secondary)] sm:inline">
           {open ? 'Свернуть' : contextLine || 'Спросите о позиции и странице'}
+        </span>
+        <span className="ml-4 truncate text-[var(--text-secondary)] sm:hidden">
+          {open ? 'Свернуть' : 'Чат с тренером'}
         </span>
         <span className="text-[var(--text-secondary)] ml-2">{open ? '▼' : '▲'}</span>
       </button>
 
       {open && (
-        <div className="border-t border-gray-700 px-4 py-3 flex flex-col gap-3 h-72">
+        <div className="flex h-52 flex-col gap-3 border-t border-gray-700 px-3 py-3 sm:h-72 sm:px-4">
           <div className="text-xs text-[var(--text-secondary)] space-y-0.5">
             <p>Контекст: {contextLine}</p>
             {context.fen && <p className="truncate">FEN: {context.fen}</p>}

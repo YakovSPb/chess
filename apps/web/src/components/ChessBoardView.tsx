@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess, type Square } from 'chess.js';
 import type { CSSProperties } from 'react';
@@ -58,16 +58,44 @@ function needsPromotion(fen: string, from: string, to: string): boolean {
     .some((move) => move.to === to && move.promotion);
 }
 
+const MAX_BOARD_WIDTH = 480;
+
+function useResponsiveBoardWidth(maxWidth: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [boardWidth, setBoardWidth] = useState(maxWidth);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      const available = container.clientWidth;
+      const gutter = Math.max(18, Math.round(available * 0.04));
+      const nextWidth = Math.min(maxWidth, Math.max(240, available - gutter));
+      setBoardWidth(nextWidth);
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [maxWidth]);
+
+  return { containerRef, boardWidth };
+}
+
 export function ChessBoardView({
   fen,
   orientation = 'white',
   onMove,
   allowMoves = true,
-  boardWidth = 480,
+  boardWidth: boardWidthProp,
   squareStyles,
 }: ChessBoardViewProps) {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
+  const maxWidth = boardWidthProp ?? MAX_BOARD_WIDTH;
+  const { containerRef, boardWidth } = useResponsiveBoardWidth(maxWidth);
 
   useEffect(() => {
     setSelectedSquare(null);
@@ -165,6 +193,7 @@ export function ChessBoardView({
   };
 
   return (
+    <div ref={containerRef} className="mx-auto w-full min-w-0">
     <div
       className="mx-auto shrink-0 w-full"
       style={{
@@ -238,6 +267,7 @@ export function ChessBoardView({
           {file}
         </span>
       ))}
+    </div>
     </div>
   );
 }

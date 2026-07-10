@@ -23,7 +23,7 @@ export function GamesPage() {
             <Link
               key={g.id}
               to={`/games/${g.id}`}
-              className="card flex justify-between items-center hover:border-[var(--accent)] transition-colors"
+              className="card flex flex-col gap-2 transition-colors hover:border-[var(--accent)] sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <span className="font-medium">
@@ -33,7 +33,7 @@ export function GamesPage() {
                   {new Date(g.created_at).toLocaleDateString('ru-RU')}
                 </span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {g.analysis?.accuracy !== undefined && (
                   <span className="text-sm">Точность: {Math.round(g.analysis.accuracy)}%</span>
                 )}

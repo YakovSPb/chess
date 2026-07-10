@@ -253,8 +253,8 @@ export function PuzzlesPage() {
         </p>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card lg:col-span-1 max-h-[520px] overflow-y-auto">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="card order-2 max-h-64 overflow-y-auto lg:order-1 lg:col-span-1 lg:max-h-[520px]">
           <h3 className="font-semibold mb-3">
             Список задач{puzzleList.length > 0 ? ` · ${puzzleList.length}` : ''}
           </h3>
@@ -284,7 +284,7 @@ export function PuzzlesPage() {
           )}
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="order-1 lg:order-2 lg:col-span-2">
           {loading ? (
             <p className="text-[var(--text-secondary)]">Загрузка задачи...</p>
           ) : puzzle ? (

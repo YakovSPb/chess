@@ -26,7 +26,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--bg-primary)] px-4 py-6">
       <div className="card w-full max-w-md">
         <h1 className="text-2xl font-bold text-[var(--accent)] mb-2">ChessTrain</h1>
         <p className="text-[var(--text-secondary)] mb-6">Вход в аккаунт</p>
