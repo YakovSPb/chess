@@ -1,12 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, get_optional_user
 from app.database import get_db
 from app.models import Lesson, LessonProgress, User
-from app.schemas import LessonProgressUpdate, OpeningDetailResponse, OpeningResponse
+from app.schemas import (
+    LessonProgressUpdate,
+    OpeningDetailResponse,
+    OpeningExplorerMove,
+    OpeningResponse,
+)
+from app.services.opening_explorer import get_most_common_move
 
 router = APIRouter(prefix="/openings", tags=["openings"])
+
+
+@router.get("/explorer", response_model=OpeningExplorerMove)
+async def opening_explorer(
+    fen: str = Query(..., min_length=10, description="FEN позиции"),
+):
+    """Самый частый ход в позиции (Lichess / masters book)."""
+    move = await get_most_common_move(fen)
+    if not move:
+        raise HTTPException(status_code=404, detail="No book move")
+    return OpeningExplorerMove(**move)
 
 
 @router.get("", response_model=list[OpeningResponse])

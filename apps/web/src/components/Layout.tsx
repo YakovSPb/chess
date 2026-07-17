@@ -9,6 +9,7 @@ const navItems = [
   { to: '/play', label: 'Игра с ботом', icon: '♟' },
   { to: '/coach', label: 'Тренер', icon: '🎓' },
   { to: '/openings', label: 'Дебюты', icon: '♜' },
+  { to: '/championships', label: 'Чемпионаты', icon: '🏆' },
   { to: '/learn', label: 'Обучение', icon: '📚' },
   { to: '/games', label: 'Мои партии', icon: '📊' },
   { to: '/settings', label: 'Настройки', icon: '⚙' },

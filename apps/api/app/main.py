@@ -6,17 +6,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.models import Lesson
-from app.routers import auth, coach, games, lessons, openings, puzzles
+from app.routers import auth, championships, coach, games, lessons, openings, puzzles
 from app.services.lessons_data import LESSONS
 from app.services.seed import seed_test_admin
+from app.services.seed_championships import seed_championships
 from app.services.seed_openings import ensure_opening_columns, seed_openings
 from app.services.seed_puzzles import ensure_puzzles
+
+TRAINING_CATEGORIES = ("opening", "championship")
 
 
 def seed_lessons():
     db = SessionLocal()
     try:
-        if db.query(Lesson).filter(Lesson.category != "opening").count() == 0:
+        if db.query(Lesson).filter(~Lesson.category.in_(TRAINING_CATEGORIES)).count() == 0:
             for lesson_data in LESSONS:
                 db.add(Lesson(**lesson_data))
             db.commit()
@@ -30,6 +33,7 @@ async def lifespan(_app: FastAPI):
     ensure_opening_columns()
     seed_lessons()
     seed_openings()
+    seed_championships()
     seed_test_admin()
     db = SessionLocal()
     try:
@@ -58,6 +62,7 @@ app.include_router(puzzles.router)
 app.include_router(coach.router)
 app.include_router(lessons.router)
 app.include_router(openings.router)
+app.include_router(championships.router)
 
 
 @app.get("/health")

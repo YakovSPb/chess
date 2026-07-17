@@ -151,6 +151,32 @@ export interface OpeningDetail extends Opening {
   cons: string[];
 }
 
+export interface Championship {
+  id: number;
+  title: string;
+  event: string;
+  year: number;
+  white: string;
+  black: string;
+  result: string;
+  winner: 'white' | 'black' | 'draw' | string;
+  winner_name: string | null;
+  loser_name: string | null;
+  description: string;
+  popularity: number;
+  player_color: 'white' | 'black';
+  steps_count: number;
+  completed: boolean;
+}
+
+export interface ChampionshipDetail extends Championship {
+  steps: Array<{
+    actor: 'user' | 'bot';
+    expected_move: string;
+    explanation: string;
+  }>;
+}
+
 export interface DashboardStats {
   puzzle_rating: number;
   puzzle_streak: number;
@@ -269,8 +295,23 @@ export const api = {
 
   getOpening: (id: number) => request<OpeningDetail>(`/openings/${id}`),
 
+  getOpeningExplorerMove: (fen: string) =>
+    request<{ uci: string; san: string; games: number; source: string }>(
+      `/openings/explorer?fen=${encodeURIComponent(fen)}`,
+    ),
+
   updateOpeningProgress: (id: number, currentStep: number, completed: boolean) =>
     request<{ ok: boolean }>(`/openings/${id}/progress`, {
+      method: 'POST',
+      body: JSON.stringify({ current_step: currentStep, completed }),
+    }),
+
+  getChampionships: () => request<Championship[]>('/championships'),
+
+  getChampionship: (id: number) => request<ChampionshipDetail>(`/championships/${id}`),
+
+  updateChampionshipProgress: (id: number, currentStep: number, completed: boolean) =>
+    request<{ ok: boolean }>(`/championships/${id}/progress`, {
       method: 'POST',
       body: JSON.stringify({ current_step: currentStep, completed }),
     }),

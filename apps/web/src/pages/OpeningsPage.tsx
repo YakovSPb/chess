@@ -164,24 +164,47 @@ export function OpeningsPage() {
 
     setBotThinking(true);
     clearHint();
+    const fenBefore = chess.fen();
     try {
       let uci: string | null = null;
+      let fromBook = false;
+
+      // 1) Самый частый ход из opening book (Lichess / masters)
       try {
-        const engine = await getBotEngine();
-        // Сильный движок ≈ типичные главные продолжения дебюта
-        engine.setStrength(2400, true);
-        uci = await engine.getBestMove(chess.fen(), 450, 10);
+        const book = await api.getOpeningExplorerMove(fenBefore);
+        if (book?.uci && applyUci(chess, book.uci)) {
+          uci = book.uci;
+          fromBook = true;
+        }
       } catch {
-        uci = pickFallbackUci(chess);
+        // book unavailable — fall through to engine
       }
 
-      if (!uci || !applyUci(chess, uci)) {
+      // 2) Вне книги — полный Stockfish без LimitStrength
+      if (!uci) {
+        try {
+          const engine = await getBotEngine();
+          engine.setStrength(3200, false);
+          uci = await engine.getBestMove(fenBefore, 800, 16);
+        } catch {
+          uci = pickFallbackUci(chess);
+        }
+        if (uci && !applyUci(chess, uci)) {
+          uci = null;
+        }
+      }
+
+      if (!uci) {
         setFeedback('Не удалось сделать ход соперника.');
         return;
       }
 
       setFen(chess.fen());
-      setFeedback('Соперник сыграл типичное продолжение.');
+      setFeedback(
+        fromBook
+          ? 'Соперник сыграл самый частый ход в этой позиции.'
+          : 'Соперник сыграл сильный ход движка.',
+      );
       refreshGameOver();
     } finally {
       setBotThinking(false);
@@ -193,7 +216,7 @@ export function OpeningsPage() {
     async (opening: OpeningDetail) => {
       setCompleted(true);
       setFeedback(
-        'Дебют пройден! Можно продолжать партию — соперник отвечает типичными ходами. Ниже — плюсы, минусы и план.'
+        'Дебют пройден! Продолжайте партию — соперник ходит самыми частыми продолжениями. Ниже — плюсы, минусы и план.'
       );
 
       if (
@@ -402,7 +425,7 @@ export function OpeningsPage() {
             ? gameOverText
             : completed
               ? botThinking
-                ? 'Соперник выбирает типичный ход...'
+                ? 'Соперник выбирает частый ход...'
                 : freeUserTurn
                   ? 'Свободная игра — ваш ход'
                   : 'Ожидание хода...'
@@ -429,7 +452,8 @@ export function OpeningsPage() {
               <p>{selected.description}</p>
               <p className="text-sm text-[var(--text-secondary)] mt-2">
                 Вы играете {selected.player_color === 'white' ? 'белыми' : 'чёрными'}. Сначала
-                соперник идёт по дебютной линии, после неё — типичными сильными ходами.
+                соперник идёт по дебютной линии, после неё — самыми частыми ходами из практики, а
+                вне книги — сильным Stockfish.
               </p>
               {!completed && (
                 <p className="text-xs text-[var(--text-secondary)] mt-3">
@@ -498,8 +522,9 @@ export function OpeningsPage() {
     <div>
       <h2 className="text-2xl font-bold mb-2">Дебюты</h2>
       <p className="text-[var(--text-secondary)] mb-6">
-        Изучайте популярные дебюты: сыграйте линию, после неё продолжайте партию против типичных
-        ходов. Подсказки доступны на всём пути. Плюсы и минусы откроются после прохождения линии.
+        Изучайте популярные дебюты: сыграйте линию, после неё продолжайте партию — соперник ходит
+        самыми частыми продолжениями. Подсказки доступны на всём пути. Плюсы и минусы откроются после
+        прохождения линии.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

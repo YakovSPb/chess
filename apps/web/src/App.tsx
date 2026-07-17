@@ -9,6 +9,7 @@ import { GamesPage } from './pages/GamesPage';
 import { LearnPage } from './pages/LearnPage';
 import { LoginPage } from './pages/LoginPage';
 import { OpeningsPage } from './pages/OpeningsPage';
+import { ChampionshipsPage } from './pages/ChampionshipsPage';
 import { PlayBotPage } from './pages/PlayBotPage';
 import { PuzzlesPage } from './pages/PuzzlesPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="coach" element={<CoachPage />} />
         <Route path="coach/:id" element={<GamePage mode="coach" />} />
         <Route path="openings" element={<OpeningsPage />} />
+        <Route path="championships" element={<ChampionshipsPage />} />
         <Route path="learn" element={<LearnPage />} />
         <Route path="games" element={<GamesPage />} />
         <Route path="games/:id" element={<GameReportPage />} />

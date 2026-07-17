@@ -202,6 +202,35 @@ class OpeningDetailResponse(OpeningResponse):
     cons: list[str]
 
 
+class OpeningExplorerMove(BaseModel):
+    uci: str
+    san: str = ""
+    games: int = 0
+    source: str = ""
+
+
+class ChampionshipResponse(BaseModel):
+    id: int
+    title: str
+    event: str
+    year: int
+    white: str
+    black: str
+    result: str
+    winner: str
+    winner_name: str | None
+    loser_name: str | None
+    description: str
+    popularity: int
+    player_color: str
+    steps_count: int
+    completed: bool = False
+
+
+class ChampionshipDetailResponse(ChampionshipResponse):
+    steps: list[dict[str, Any]]
+
+
 class DashboardStats(BaseModel):
     puzzle_rating: float
     puzzle_streak: int

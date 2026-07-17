@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     openai_api_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"
     cors_origins: str = "http://localhost:5173"
+    # Personal token с https://lichess.org/account/oauth/token — для частых ходов в дебютах
+    lichess_api_token: str = ""
 
     @property
     def llm_model(self) -> str:

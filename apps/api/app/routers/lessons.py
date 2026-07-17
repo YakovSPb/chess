@@ -21,7 +21,7 @@ class LessonExplainRequest(BaseModel):
 def list_lessons(db: Session = Depends(get_db)):
     lessons = (
         db.query(Lesson)
-        .filter(Lesson.category != "opening")
+        .filter(~Lesson.category.in_(("opening", "championship")))
         .order_by(Lesson.category, Lesson.difficulty)
         .all()
     )

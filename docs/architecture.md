@@ -35,6 +35,7 @@ chess/
 | Игра с ботом | Stockfish UCI_Elo 800–2800 |
 | Тренер | OpenAI + Stockfish подсказки |
 | Обучение | Интерактивные уроки (дебюты, тактика, эндшпиль) |
+| Чемпионаты | Знаменитые партии ЧМ: прохождение всей линии |
 | Отчёт | Eval graph, accuracy, классификация ходов |
 
 ## API
@@ -43,6 +44,9 @@ chess/
 - `GET/POST/PATCH /games`
 - `GET /puzzles/next`, `POST /puzzles/{id}/solve`
 - `POST /coach/hint`, `/coach/explain-move`, `/coach/summarize-game`
+- `GET /openings`, `/openings/{id}`, `POST /openings/{id}/progress`
+- `GET /openings/explorer?fen=` — самый частый ход (нужен `LICHESS_API_TOKEN`)
+- `GET /championships`, `/championships/{id}`, `POST /championships/{id}/progress`
 - `GET /lessons`, `/stats/dashboard`
 
 ## База данных

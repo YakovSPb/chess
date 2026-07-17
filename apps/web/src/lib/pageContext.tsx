@@ -19,6 +19,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/play': 'Игра с ботом',
   '/coach': 'Тренер',
   '/openings': 'Дебюты',
+  '/championships': 'Чемпионаты',
   '/learn': 'Обучение',
   '/games': 'Мои партии',
   '/settings': 'Настройки',
