@@ -11,6 +11,7 @@ const navItems = [
   { to: '/openings', label: 'Дебюты', icon: '♜' },
   { to: '/championships', label: 'Чемпионаты', icon: '🏆' },
   { to: '/learn', label: 'Обучение', icon: '📚' },
+  { to: '/study', label: 'Учёба', icon: '📝' },
   { to: '/games', label: 'Мои партии', icon: '📊' },
   { to: '/settings', label: 'Настройки', icon: '⚙' },
 ];

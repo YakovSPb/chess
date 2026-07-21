@@ -7,6 +7,7 @@ import { GamePage } from './pages/GamePage';
 import { GameReportPage } from './pages/GameReportPage';
 import { GamesPage } from './pages/GamesPage';
 import { LearnPage } from './pages/LearnPage';
+import { StudyPage } from './pages/StudyPage';
 import { LoginPage } from './pages/LoginPage';
 import { OpeningsPage } from './pages/OpeningsPage';
 import { ChampionshipsPage } from './pages/ChampionshipsPage';
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="openings" element={<OpeningsPage />} />
         <Route path="championships" element={<ChampionshipsPage />} />
         <Route path="learn" element={<LearnPage />} />
+        <Route path="study" element={<StudyPage />} />
         <Route path="games" element={<GamesPage />} />
         <Route path="games/:id" element={<GameReportPage />} />
         <Route path="settings" element={<SettingsPage />} />
