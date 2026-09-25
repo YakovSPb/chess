@@ -16,8 +16,8 @@ const FILES = 'abcdefgh';
 const TOKEN_SOURCE =
   '\\b(?:O-O-O|O-O|[NBRQK][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x[a-h][1-8]|[a-h][1-8])(?:=[NBRQ])?\\b';
 
-const CONTROL = /держ|защи|напад|напал|смотрит|смотрят|бь[её]т|бь[её]м|атак|контрол|занима/i;
-const NEGATED_CONTROL = /не\s+(?:держ|защи|напад|смотрит|бь|атак|контрол|занима)/i;
+const CONTROL = /держ|защи|закры|напад|напал|смотрит|смотрят|бь[её]т|бь[её]м|атак|контрол|занима/i;
+const NEGATED_CONTROL = /не\s+(?:держ|защи|закры|напад|смотрит|бь|атак|контрол|занима)/i;
 const MOVE_VERB = /сыгра|ответил|поставил|вывел|выведи|забира|начина|приш[её]л|ид[её]т на|поставь/i;
 const NEGATED_MOVE = /не\s+(?:трог|играем|ходи|ставь|бер[её]м)/i;
 const PRONOUN = /(?:^|[^\p{L}])(?:он|она|они)(?:[^\p{L}]|$)/iu;
@@ -143,6 +143,34 @@ function moveArrow(mark: MoveMark): BoardArrow {
   return { startSquare: mark.from, endSquare: mark.to, color: MOVE };
 }
 
+function coverArrowsOn(chess: Chess, square: string): BoardArrow[] {
+  const piece = chess.get(square as Square);
+  if (!piece) return [];
+  const attacks = attacksOf(chess, square);
+  const friends = attacks.filter((target) => chess.get(target as Square)?.color === piece.color);
+  const targets =
+    friends.length > 0 ? friends : piece.type === 'p' ? attacks : attacks.filter((target) => CENTER.has(target));
+  return targets.slice(0, 6).map((target) => ({
+    startSquare: square,
+    endSquare: target,
+    color: HOLD,
+  }));
+}
+
+export function coversOf(fen: string, square: string): BoardArrow[] {
+  try {
+    return coverArrowsOn(new Chess(fen), square);
+  } catch {
+    return [];
+  }
+}
+
+function finish(arrows: BoardArrow[], board: CommentBoard): BoardArrow[] {
+  const landing = arrows.find((arrow) => arrow.color === MOVE)?.endSquare;
+  if (!landing) return unique(arrows);
+  return unique([...arrows, ...coverArrowsOn(positionForArrows(board), landing)]);
+}
+
 function unique(arrows: BoardArrow[]): BoardArrow[] {
   const seen = new Set<string>();
   const result: BoardArrow[] = [];
@@ -177,7 +205,7 @@ export function arrowsForSentence(sentence: string, board: CommentBoard | undefi
       originSquare(text) ??
       (PRONOUN.test(text) ? board.focus?.to : undefined);
     if (!subject && board.focus && /центр|занима/.test(text)) subject = board.focus.to;
-    if (!subject) return unique(marks.map(moveArrow));
+    if (!subject) return finish(marks.map(moveArrow), board);
 
     const attacks = attacksOf(positionForArrows(board), subject);
     const mentioned = found
@@ -201,7 +229,7 @@ export function arrowsForSentence(sentence: string, board: CommentBoard | undefi
       if (placed.length === 0 && focus && subject === focus.to) placed.push(focus);
       for (const mark of placed) arrows.unshift(moveArrow(mark));
     }
-    return unique(arrows);
+    return finish(arrows, board);
   }
 
   if (NEGATED_MOVE.test(text)) return [];
@@ -225,7 +253,7 @@ export function arrowsForSentence(sentence: string, board: CommentBoard | undefi
     if (mark) arrows.push(moveArrow(mark));
   }
   if (arrows.length === 0 && focus && PRONOUN.test(text)) arrows.push(moveArrow(focus));
-  return unique(arrows);
+  return finish(arrows, board);
 }
 
 export function splitComment(text: string): string[] {

@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
 import { getOpening } from '../data/openings';
+import { coversOf } from '../lib/commentArrows';
 import { commentBoard, expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, TrainMode } from '../types';
@@ -142,17 +143,18 @@ function LineSession({
   }, []);
 
   useEffect(() => {
-    previewGen.current += 1;
-    if (hideTimer.current !== null) {
-      window.clearTimeout(hideTimer.current);
-      hideTimer.current = null;
-    }
-    if (previewTimer.current !== null) {
-      window.clearTimeout(previewTimer.current);
-      previewTimer.current = null;
-    }
-    setPreview([]);
-  }, [fen]);
+    if (viewPly === ply) return;
+    clearPreview();
+  }, [viewPly, ply]);
+
+  useEffect(() => {
+    if (ply === 0 || viewPly !== ply) return;
+    const landed = squaresOfPly(line.moves, ply);
+    if (!landed) return;
+    const arrows = coversOf(positionAt(line.moves, ply), landed.to);
+    if (arrows.length === 0) return;
+    showPreview(arrows, true);
+  }, [ply, viewPly, line.moves]);
   const last = useMemo(() => squaresOfPly(line.moves, viewPly), [line.moves, viewPly]);
 
   useEffect(() => {
