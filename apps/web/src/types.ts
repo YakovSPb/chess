@@ -26,12 +26,19 @@ export type UserMove = MoveBase & {
 
 export type LineMove = OpponentMove | UserMove;
 
+export type NextIdea = {
+  san: string;
+  why: string;
+  best?: boolean;
+};
+
 export type OpeningLine = {
   id: string;
   name: string;
   intro: string;
   summary: string;
   moves: LineMove[];
+  next: NextIdea[];
 };
 
 export type Opening = {
@@ -61,9 +68,15 @@ export type BoardArrow = {
   color: string;
 };
 
+export type ChatIdea = {
+  text: string;
+  arrows: BoardArrow[];
+};
+
 export type ChatMessage = {
   id: string;
   role: 'bot' | 'user';
   text: string;
   board?: CommentBoard;
+  ideas?: ChatIdea[];
 };

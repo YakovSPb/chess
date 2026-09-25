@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
 import { getOpening } from '../data/openings';
-import { coversOf } from '../lib/commentArrows';
+import { arrowsForIdeas, coversOf } from '../lib/commentArrows';
 import { commentBoard, expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, TrainMode } from '../types';
@@ -79,6 +79,7 @@ function LineSession({
   const previewTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
   const previewGen = useRef(0);
+  const finaleArrows = useRef<BoardArrow[] | null>(null);
   const [errors, setErrors] = useState(0);
   const [awaitingUser, setAwaitingUser] = useState(line.moves[0]?.by === 'user');
   const [done, setDone] = useState(false);
@@ -111,6 +112,10 @@ function LineSession({
     hideTimer.current = window.setTimeout(() => {
       hideTimer.current = null;
       if (previewGen.current !== generation) return;
+      if (finaleArrows.current && viewPly === ply) {
+        showPreview(finaleArrows.current, false);
+        return;
+      }
       clearPreview();
     }, 60);
   }
@@ -131,7 +136,7 @@ function LineSession({
     previewTimer.current = window.setTimeout(() => {
       if (previewGen.current !== generation) return;
       previewTimer.current = null;
-      setPreview([]);
+      setPreview(finaleArrows.current ?? []);
     }, PREVIEW_MS);
   }
 
@@ -148,13 +153,13 @@ function LineSession({
   }, [viewPly, ply]);
 
   useEffect(() => {
-    if (ply === 0 || viewPly !== ply) return;
+    if (ply === 0 || viewPly !== ply || ply >= total) return;
     const landed = squaresOfPly(line.moves, ply);
     if (!landed) return;
     const arrows = coversOf(positionAt(line.moves, ply), landed.to);
     if (arrows.length === 0) return;
     showPreview(arrows, true);
-  }, [ply, viewPly, line.moves]);
+  }, [ply, viewPly, line.moves, total]);
   const last = useMemo(() => squaresOfPly(line.moves, viewPly), [line.moves, viewPly]);
 
   useEffect(() => {
@@ -170,6 +175,12 @@ function LineSession({
         mistakes === 0
           ? 'Чисто. Линия уйдёт на повторение по интервалу: 1 день, потом 3, 7, 16 и 35.'
           : `Ошибок: ${mistakes}. Завтра эта линия вернётся сама — ошибка сбрасывает интервал.`;
+      const fen = positionAt(line.moves, total);
+      const color = opening.side === 'white' ? 'w' : 'b';
+      const ideas = arrowsForIdeas(fen, line.next, color);
+      const arrows = ideas.flatMap((idea) => idea.arrows);
+      finaleArrows.current = arrows.length > 0 ? arrows : null;
+      if (finaleArrows.current) showPreview(finaleArrows.current, false);
       setMessages((prev) => [
         ...prev,
         {
@@ -177,6 +188,7 @@ function LineSession({
           role: 'bot',
           text: `Линия пройдена. ${line.summary}\n\n${tail}`,
           board: commentBoard(line.moves, total),
+          ideas,
         },
       ]);
       return;
@@ -214,7 +226,7 @@ function LineSession({
         board: commentBoard(line.moves, ply, move.san),
       },
     ]);
-  }, [done, line, mode, ply, total]);
+  }, [done, line, mode, opening.side, ply, total]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import { OPENINGS } from '../src/data/openings';
-import { sideToMove } from '../src/lib/line';
+import { continuationMark, sideToMove } from '../src/lib/line';
 
 const errors: string[] = [];
 
@@ -43,6 +43,15 @@ for (const opening of OPENINGS) {
     const last = line.moves[line.moves.length - 1];
     if (last?.by !== 'user') {
       errors.push(`${line.id}: линия должна заканчиваться ходом ученика`);
+    }
+    const color = opening.side === 'white' ? 'w' : 'b';
+    const best = line.next.filter((idea) => idea.best);
+    if (best.length !== 1) {
+      errors.push(`${line.id}: нужен один лучший ход в next`);
+    }
+    for (const idea of line.next) {
+      const mark = continuationMark(chess.fen(), idea.san, color);
+      if (!mark) errors.push(`${line.id}: продолжение ${idea.san} не находится`);
     }
   }
 }

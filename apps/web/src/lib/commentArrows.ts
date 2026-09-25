@@ -1,8 +1,10 @@
 import { Chess, type Square } from 'chess.js';
-import type { BoardArrow, CommentBoard, MoveMark } from '../types';
+import { continuationMark } from './line';
+import type { BoardArrow, CommentBoard, MoveMark, NextIdea } from '../types';
 
 const MOVE = '#f6c445';
 const HOLD = '#3ecf8e';
+const NEXT = '#60a5fa';
 
 const CENTER = new Set([
   'c3', 'd3', 'e3', 'f3',
@@ -265,4 +267,23 @@ export function arrowsForSentence(sentence: string, board: CommentBoard | undefi
 
 export function splitComment(text: string): string[] {
   return text.split(/(\n+|(?<=[.!?])\s+)/);
+}
+
+export function arrowsForIdeas(fen: string, ideas: NextIdea[], color: 'w' | 'b'): { text: string; arrows: BoardArrow[] }[] {
+  return ideas.flatMap((idea) => {
+    const mark = continuationMark(fen, idea.san, color);
+    if (!mark) return [];
+    return [
+      {
+        text: `${idea.best ? 'Лучше' : 'Можно'} ${idea.san} — ${idea.why}`,
+        arrows: [
+          {
+            startSquare: mark.from,
+            endSquare: mark.to,
+            color: idea.best ? MOVE : NEXT,
+          },
+        ],
+      },
+    ];
+  });
 }

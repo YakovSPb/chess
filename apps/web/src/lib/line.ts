@@ -71,6 +71,32 @@ export function commentBoard(moves: LineMove[], ply: number, focusSan?: string):
   return { fen, focus, played };
 }
 
+export function continuationMark(fen: string, san: string, color: 'w' | 'b'): MoveMark | null {
+  const play = (board: Chess) => {
+    try {
+      const played = board.move(san);
+      if (!played || played.san !== san) return null;
+      return { san: played.san, from: played.from, to: played.to };
+    } catch {
+      return null;
+    }
+  };
+
+  const current = new Chess(fen);
+  if (current.turn() === color) return play(current);
+
+  const parts = fen.split(' ');
+  parts[1] = color;
+  parts[3] = '-';
+  const side = new Chess();
+  try {
+    side.load(parts.join(' '));
+  } catch {
+    return null;
+  }
+  return play(side);
+}
+
 export function sideToMove(side: Side, by: LineMove['by']): 'w' | 'b' {
   if (by === 'user') return side === 'white' ? 'w' : 'b';
   return side === 'white' ? 'b' : 'w';

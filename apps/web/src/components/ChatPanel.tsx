@@ -121,6 +121,16 @@ function Bubble({
             />
           );
         })}
+        {message.ideas?.map((idea) => (
+          <div key={idea.text} className="mt-2">
+            <CommentSentence
+              text={idea.text}
+              arrows={idea.arrows}
+              onPreview={onPreview}
+              onPreviewEnd={onPreviewEnd}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
