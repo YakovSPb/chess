@@ -34,6 +34,7 @@ function buildMoveHighlights(
 
   styles[selectedSquare] = {
     ...styles[selectedSquare],
+    backgroundImage: 'none',
     backgroundColor: 'rgba(255, 255, 51, 0.5)',
   };
 
@@ -42,7 +43,7 @@ function buildMoveHighlights(
     const isCapture = Boolean(targetPiece);
     styles[move.to] = {
       ...styles[move.to],
-      background: isCapture
+      backgroundImage: isCapture
         ? 'radial-gradient(circle, transparent 55%, rgba(0, 0, 0, 0.25) 56%)'
         : 'radial-gradient(circle, rgba(0, 0, 0, 0.2) 22%, transparent 23%)',
     };
@@ -234,10 +235,11 @@ export function ChessBoardView({
             showNotation: false,
             squareStyles: mergedSquareStyles,
             onSquareClick: handleSquareClick,
-            darkSquareStyle: { backgroundColor: '#769656' },
-            lightSquareStyle: { backgroundColor: '#eeeed2' },
+            darkSquareStyle: { backgroundColor: '#b58863' },
+            lightSquareStyle: { backgroundColor: '#f0d9b5' },
             boardStyle: {
-              borderRadius: '4px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
               width: '100%',
               height: '100%',
             },

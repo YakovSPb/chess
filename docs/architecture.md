@@ -1,69 +1,41 @@
-# Архитектура ChessTrain
+# Архитектура
 
-## Обзор
-
-ChessTrain — веб-приложение для шахматной тренировки (chess.com-подобное).
+Тренажёр дебютов. Сейчас это одно фронтенд-приложение, без аккаунта и сервера.
 
 ```
-Frontend (React)  →  API (FastAPI)  →  PostgreSQL
-       ↓                    ↓
- Stockfish WASM      OpenAI API
-   (анализ/бот)        (тренер)
+apps/web/   React + Vite + TypeScript
+docs/       Как устроен продукт
 ```
 
-## Принцип разделения
+## Экраны
 
-- **Stockfish** — сила бота, оценка позиций, классификация ходов
-- **OpenAI** — объяснения на русском (не генерирует ходы)
+| Путь | Что делает |
+|------|------------|
+| `/` | Каталог: итальянская, лондонская, Каро-Канн, ответ на 1.d4 |
+| `/openings/:id?line=&mode=` | Доска и чат тренера. `mode=learn` или `mode=quiz` |
+| `/review` | Линии, у которых подошёл интервал повторения |
 
-## Структура monorepo
+## Данные
 
-```
-chess/
-├── apps/web/          React + Vite + TypeScript
-├── apps/api/          FastAPI + SQLAlchemy
-├── packages/shared/   Общие типы
-├── scripts/           Импорт задач Lichess
-└── docs/              Документация
-```
+Дебюты лежат в `apps/web/src/data/openings.ts`.
 
-## Модули
+Линия — последовательность ходов. У хода ученика есть:
 
-| Модуль | Описание |
-|--------|----------|
-| Задачи | Lichess puzzles, рейтинг Glicko, темы |
-| Игра с ботом | Stockfish UCI_Elo 800–2800 |
-| Тренер | OpenAI + Stockfish подсказки |
-| Обучение | Интерактивные уроки (дебюты, тактика, эндшпиль) |
-| Учёба | 100 шахматных утверждений с 3 примерами-задачами каждое |
-| Чемпионаты | Знаменитые партии ЧМ: прохождение всей линии |
-| Отчёт | Eval graph, accuracy, классификация ходов |
+- `say` — текст до хода в режиме «Учить» (ход назван)
+- `hint` — подсказка в режиме «Проверка» (ход не назван)
+- `why` и `plan` — объяснение после верного хода в проверке
+- `alternatives` — другой допустимый ход: не ошибка, но линия продолжается основным
 
-## API
+Ход соперника компьютер делает сам и коротко комментирует в чате.
 
-- `POST /auth/register`, `/auth/login`
-- `GET/POST/PATCH /games`
-- `GET /puzzles/next`, `POST /puzzles/{id}/solve`
-- `POST /coach/hint`, `/coach/explain-move`, `/coach/summarize-game`
-- `GET /openings`, `/openings/{id}`, `POST /openings/{id}/progress`
-- `GET /openings/explorer?fen=` — самый частый ход (нужен `LICHESS_API_TOKEN`)
-- `GET /championships`, `/championships/{id}`, `POST /championships/{id}/progress`
-- `GET /lessons`, `/stats/dashboard`
+## Проверка хода
 
-## База данных
+`chess.js` сравнивает SAN. Верный ход остаётся на доске. Неверный откатывается, в чате пишется ожидаемый ход, клетки подсвечиваются. Допустимая альтернатива не считается ошибкой, но на доске нужно сделать ход линии.
 
-- `users` — аккаунты, puzzle rating, streak
-- `games` — PGN, analysis JSON, coach summary
-- `puzzles` — Lichess задачи
-- `puzzle_attempts` — попытки решения
-- `lessons`, `lesson_progress` — обучение
-- `coach_cache` — кэш ответов тренера (OpenAI)
+## Повторение
 
-## Запуск
+`localStorage`, ключ `opening-srs-v1`. Чистая линия уходит на 1, 3, 7, 16, 35 дней. Ошибка возвращает её на завтра.
 
-```bash
-docker-compose up -d postgres
-cd apps/api && pip install -r requirements.txt && uvicorn app.main:app --reload
-cd apps/web && npm install && npm run dev
-python scripts/import_lichess_puzzles.py --seed-only
-```
+## Стек доски
+
+`react-chessboard` рисует доску, `chess.js` считает ходы. Stockfish и свободная игра в эту версию не входят.

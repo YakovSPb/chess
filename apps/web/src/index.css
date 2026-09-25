@@ -1,50 +1,39 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #0f3460;
-  --accent: #e94560;
-  --accent-hover: #ff6b6b;
-  --text-primary: #eaeaea;
-  --text-secondary: #a0a0a0;
-  --board-light: #eeeed2;
-  --board-dark: #769656;
+  --background: #0e1116;
+  --card-bg: #171b22;
+  --foreground: #f4f6f8;
+  --muted-foreground: #9aa3b2;
+  --accent: #3b82f6;
+  --chat-border: #2c3442;
+  --hover-bg: #222a36;
+  --user-bubble: #1d4ed8;
+  --bot-bubble: #1c2330;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 * {
   box-sizing: border-box;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer;
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
-.btn-primary {
-  @apply bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white;
+button {
+  cursor: pointer;
 }
-
-.btn-secondary {
-  @apply bg-[var(--bg-card)] hover:bg-[var(--bg-secondary)] text-white border border-gray-600;
-}
-
-.card {
-  @apply bg-[var(--bg-secondary)] rounded-xl p-4 border border-gray-700;
-}
-
-.input {
-  @apply w-full px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-gray-600 text-white focus:outline-none focus:border-[var(--accent)];
-}
-
-.classification-good { color: #81b64c; }
-.classification-inaccuracy { color: #f0c15d; }
-.classification-mistake { color: #e58f2a; }
-.classification-blunder { color: #ca3431; }
-.classification-brilliant { color: #1baca6; }
