@@ -147,10 +147,17 @@ function coverArrowsOn(chess: Chess, square: string): BoardArrow[] {
   const piece = chess.get(square as Square);
   if (!piece) return [];
   const attacks = attacksOf(chess, square);
-  const friends = attacks.filter((target) => chess.get(target as Square)?.color === piece.color);
+  const centralFriends = attacks.filter((target) => {
+    const occupant = chess.get(target as Square);
+    return occupant?.type === 'p' && occupant.color === piece.color && CENTER.has(target);
+  });
   const targets =
-    friends.length > 0 ? friends : piece.type === 'p' ? attacks : attacks.filter((target) => CENTER.has(target));
-  return targets.slice(0, 6).map((target) => ({
+    centralFriends.length > 0
+      ? centralFriends
+      : piece.type === 'p'
+        ? attacks.filter((target) => CENTER.has(target))
+        : [];
+  return targets.slice(0, 4).map((target) => ({
     startSquare: square,
     endSquare: target,
     color: HOLD,
