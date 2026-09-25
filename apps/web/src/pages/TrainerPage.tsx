@@ -3,9 +3,9 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
 import { getOpening } from '../data/openings';
-import { expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
+import { commentBoard, expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
-import type { ChatMessage, Opening, OpeningLine, TrainMode } from '../types';
+import type { BoardArrow, ChatMessage, Opening, OpeningLine, TrainMode } from '../types';
 
 let messageSeq = 0;
 
@@ -13,6 +13,8 @@ function nextMessageId() {
   messageSeq += 1;
   return `msg-${messageSeq}`;
 }
+
+const PREVIEW_MS = 1800;
 
 const GOLD: CSSProperties = {
   backgroundImage: 'linear-gradient(45deg, rgba(255, 215, 0, 0.6), rgba(255, 215, 0, 0.3))',
@@ -70,8 +72,12 @@ function LineSession({
   const [ply, setPly] = useState(0);
   const [viewPly, setViewPly] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    { id: nextMessageId(), role: 'bot', text: line.intro },
+    { id: nextMessageId(), role: 'bot', text: line.intro, board: commentBoard(line.moves, 0) },
   ]);
+  const [preview, setPreview] = useState<BoardArrow[]>([]);
+  const previewTimer = useRef<number | null>(null);
+  const hideTimer = useRef<number | null>(null);
+  const previewGen = useRef(0);
   const [errors, setErrors] = useState(0);
   const [awaitingUser, setAwaitingUser] = useState(line.moves[0]?.by === 'user');
   const [done, setDone] = useState(false);
@@ -84,6 +90,69 @@ function LineSession({
   plyRef.current = ply;
 
   const fen = useMemo(() => positionAt(line.moves, viewPly), [line.moves, viewPly]);
+
+  function clearPreview() {
+    previewGen.current += 1;
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+    if (previewTimer.current !== null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+    setPreview([]);
+  }
+
+  function hidePreviewSoon() {
+    if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
+    const generation = previewGen.current;
+    hideTimer.current = window.setTimeout(() => {
+      hideTimer.current = null;
+      if (previewGen.current !== generation) return;
+      clearPreview();
+    }, 60);
+  }
+
+  function showPreview(arrows: BoardArrow[], flash: boolean) {
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+    previewGen.current += 1;
+    const generation = previewGen.current;
+    if (previewTimer.current !== null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+    setPreview(arrows);
+    if (!flash) return;
+    previewTimer.current = window.setTimeout(() => {
+      if (previewGen.current !== generation) return;
+      previewTimer.current = null;
+      setPreview([]);
+    }, PREVIEW_MS);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
+      if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    previewGen.current += 1;
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+    if (previewTimer.current !== null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+    setPreview([]);
+  }, [fen]);
   const last = useMemo(() => squaresOfPly(line.moves, viewPly), [line.moves, viewPly]);
 
   useEffect(() => {
@@ -101,7 +170,12 @@ function LineSession({
           : `Ошибок: ${mistakes}. Завтра эта линия вернётся сама — ошибка сбрасывает интервал.`;
       setMessages((prev) => [
         ...prev,
-        { id: nextMessageId(), role: 'bot', text: `Линия пройдена. ${line.summary}\n\n${tail}` },
+        {
+          id: nextMessageId(),
+          role: 'bot',
+          text: `Линия пройдена. ${line.summary}\n\n${tail}`,
+          board: commentBoard(line.moves, total),
+        },
       ]);
       return;
     }
@@ -110,7 +184,15 @@ function LineSession({
     if (move.by === 'opponent') {
       setAwaitingUser(false);
       const timer = window.setTimeout(() => {
-        setMessages((prev) => [...prev, { id: nextMessageId(), role: 'bot', text: move.say }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextMessageId(),
+            role: 'bot',
+            text: move.say,
+            board: commentBoard(line.moves, ply + 1, move.san),
+          },
+        ]);
         setPly((current) => current + 1);
         setViewPly((current) => (current === ply ? ply + 1 : current));
         setMiss(null);
@@ -123,7 +205,12 @@ function LineSession({
     prompted.current.add(ply);
     setMessages((prev) => [
       ...prev,
-      { id: nextMessageId(), role: 'bot', text: mode === 'learn' ? move.say : move.hint },
+      {
+        id: nextMessageId(),
+        role: 'bot',
+        text: mode === 'learn' ? move.say : move.hint,
+        board: commentBoard(line.moves, ply, move.san),
+      },
     ]);
   }, [done, line, mode, ply, total]);
 
@@ -169,11 +256,12 @@ function LineSession({
           ? [expected.why, expected.plan ? `Дальше: ${expected.plan}` : ''].filter(Boolean).join('\n\n')
           : '';
       setMessages((prev) => {
+        const board = commentBoard(line.moves, ply + 1, expected.san);
         const next: ChatMessage[] = [
           ...prev,
-          { id: nextMessageId(), role: 'user', text: `Мой ход: ${played.san}` },
+          { id: nextMessageId(), role: 'user', text: `Мой ход: ${played.san}`, board },
         ];
-        if (extra) next.push({ id: nextMessageId(), role: 'bot', text: extra });
+        if (extra) next.push({ id: nextMessageId(), role: 'bot', text: extra, board });
         return next;
       });
       setMiss(null);
@@ -190,6 +278,7 @@ function LineSession({
           id: nextMessageId(),
           role: 'bot',
           text: `${played.san} — допустимо. ${alternative.why}\n\nВ этой линии играем ${expected.san}.`,
+          board: commentBoard(line.moves, ply, expected.san),
         },
       ]);
       return false;
@@ -205,6 +294,7 @@ function LineSession({
         id: nextMessageId(),
         role: 'bot',
         text: `${prompt}\n\n❌ Неправильно! Ожидался ход: ${expected.san}`,
+        board: commentBoard(line.moves, ply, expected.san),
       },
     ]);
     return false;
@@ -282,6 +372,7 @@ function LineSession({
             onMove={onMove}
             boardWidth={680}
             squareStyles={squareStyles}
+            arrows={preview}
           />
         </div>
         <aside className="order-1 min-h-0 border-b border-[var(--chat-border)] md:order-2 md:border-b-0 md:border-l">
@@ -292,6 +383,8 @@ function LineSession({
             hasNext={Boolean(nextLine)}
             onLine={onLine}
             onRestart={onRestart}
+            onPreview={showPreview}
+            onPreviewEnd={hidePreviewSoon}
             onNext={() => {
               if (nextLine) onLine(nextLine.id);
               else navigate('/');

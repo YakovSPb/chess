@@ -43,8 +43,27 @@ export type Opening = {
   lines: OpeningLine[];
 };
 
+export type MoveMark = {
+  san: string;
+  from: string;
+  to: string;
+};
+
+export type CommentBoard = {
+  fen: string;
+  focus: MoveMark | null;
+  played: MoveMark[];
+};
+
+export type BoardArrow = {
+  startSquare: string;
+  endSquare: string;
+  color: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: 'bot' | 'user';
   text: string;
+  board?: CommentBoard;
 };

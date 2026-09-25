@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess, type Square } from 'chess.js';
 import type { CSSProperties } from 'react';
+import type { BoardArrow } from '../types';
 import { PromotionDialog } from './PromotionDialog';
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
@@ -21,6 +22,7 @@ interface ChessBoardViewProps {
   allowMoves?: boolean;
   boardWidth?: number;
   squareStyles?: Record<string, CSSProperties>;
+  arrows?: BoardArrow[];
 }
 
 function buildMoveHighlights(
@@ -92,6 +94,7 @@ export function ChessBoardView({
   allowMoves = true,
   boardWidth: boardWidthProp,
   squareStyles,
+  arrows = [],
 }: ChessBoardViewProps) {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<PendingPromotion | null>(null);
@@ -234,6 +237,20 @@ export function ChessBoardView({
             allowDragging: false,
             showNotation: false,
             squareStyles: mergedSquareStyles,
+            arrows,
+            allowDrawingArrows: false,
+            arrowOptions: {
+              color: '#f6c445',
+              secondaryColor: '#3ecf8e',
+              tertiaryColor: '#f44336',
+              arrowLengthReducerDenominator: 8,
+              sameTargetArrowLengthReducerDenominator: 4,
+              arrowWidthDenominator: 4.5,
+              activeArrowWidthMultiplier: 0.9,
+              opacity: 0.95,
+              activeOpacity: 0.7,
+              arrowStartOffset: 0.28,
+            },
             onSquareClick: handleSquareClick,
             darkSquareStyle: { backgroundColor: '#b58863' },
             lightSquareStyle: { backgroundColor: '#f0d9b5' },

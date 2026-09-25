@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { ChatMessage, OpeningLine } from '../types';
+import { arrowsForSentence, splitComment } from '../lib/commentArrows';
+import type { BoardArrow, ChatMessage, OpeningLine } from '../types';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -9,6 +10,8 @@ interface ChatPanelProps {
   onLine: (lineId: string) => void;
   onRestart: () => void;
   onNext: () => void;
+  onPreview: (arrows: BoardArrow[], flash: boolean) => void;
+  onPreviewEnd: () => void;
 }
 
 export function ChatPanel({
@@ -19,6 +22,8 @@ export function ChatPanel({
   onLine,
   onRestart,
   onNext,
+  onPreview,
+  onPreviewEnd,
 }: ChatPanelProps) {
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +35,7 @@ export function ChatPanel({
     <div className="flex h-full min-h-0 flex-col bg-[var(--card-bg)]">
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((message) => (
-          <Bubble key={message.id} message={message} />
+          <Bubble key={message.id} message={message} onPreview={onPreview} onPreviewEnd={onPreviewEnd} />
         ))}
         <div ref={endRef} />
       </div>
@@ -76,8 +81,17 @@ export function ChatPanel({
   );
 }
 
-function Bubble({ message }: { message: ChatMessage }) {
+function Bubble({
+  message,
+  onPreview,
+  onPreviewEnd,
+}: {
+  message: ChatMessage;
+  onPreview: (arrows: BoardArrow[], flash: boolean) => void;
+  onPreviewEnd: () => void;
+}) {
   const mine = message.role === 'user';
+  const parts = splitComment(message.text);
   return (
     <div className={`flex items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
       <div
@@ -94,9 +108,64 @@ function Bubble({ message }: { message: ChatMessage }) {
             : 'rounded-bl-md border border-[var(--chat-border)] bg-[var(--bot-bubble)]'
         }`}
       >
-        {message.text}
+        {parts.map((part, index) => {
+          const arrows = arrowsForSentence(part, message.board);
+          if (arrows.length === 0) return <span key={index}>{part}</span>;
+          return (
+            <CommentSentence
+              key={index}
+              text={part}
+              arrows={arrows}
+              onPreview={onPreview}
+              onPreviewEnd={onPreviewEnd}
+            />
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function CommentSentence({
+  text,
+  arrows,
+  onPreview,
+  onPreviewEnd,
+}: {
+  text: string;
+  arrows: BoardArrow[];
+  onPreview: (arrows: BoardArrow[], flash: boolean) => void;
+  onPreviewEnd: () => void;
+}) {
+  const pointer = useRef<'mouse' | 'touch'>('mouse');
+
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      title="Показать на доске"
+      className="cursor-pointer rounded-sm underline decoration-dotted decoration-white/50 underline-offset-4 hover:bg-white/10 hover:decoration-[var(--accent)]"
+      onPointerDown={(event) => {
+        pointer.current = event.pointerType === 'mouse' ? 'mouse' : 'touch';
+      }}
+      onPointerEnter={(event) => {
+        if (event.pointerType === 'mouse') onPreview(arrows, true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === 'mouse') onPreviewEnd();
+      }}
+      onClick={() => {
+        if (pointer.current !== 'mouse') onPreview(arrows, true);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onPreview(arrows, true);
+        }
+      }}
+    >
+      {text}
+    </span>
   );
 }
 
