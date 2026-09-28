@@ -29,7 +29,7 @@ export function ReviewPage() {
             интервал, ошибка вернётся завтра.
           </p>
         ) : (
-          due.map(({ opening, line }) => (
+          due.map(({ opening, line, against }) => (
             <Link
               key={line.id}
               to={`/openings/${opening.id}?line=${line.id}&mode=quiz`}
@@ -37,7 +37,10 @@ export function ReviewPage() {
             >
               <span>
                 <span className="block font-medium">{line.name}</span>
-                <span className="text-sm text-[var(--muted-foreground)]">{opening.name}</span>
+                <span className="text-sm text-[var(--muted-foreground)]">
+                  {opening.name}
+                  {against ? ' · против тебя' : ''}
+                </span>
               </span>
               <span className="text-sm text-yellow-500">{dueLabel(line.id)}</span>
             </Link>

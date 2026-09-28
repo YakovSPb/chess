@@ -1,19 +1,24 @@
 import { Chess } from 'chess.js';
-import { OPENINGS } from '../src/data/openings';
+import { OPENINGS, studentSide } from '../src/data/openings';
 import { continuationMark, sideToMove } from '../src/lib/line';
+import type { OpeningLine, Side } from '../src/types';
 
 const errors: string[] = [];
 
-for (const opening of OPENINGS) {
-  for (const line of opening.lines) {
+function check(line: OpeningLine, side: Side) {
     const chess = new Chess();
     line.moves.forEach((move, index) => {
       const turn = chess.turn();
-      const expected = sideToMove(opening.side, move.by);
+      const expected = sideToMove(side, move.by);
       if (turn !== expected) {
         errors.push(`${line.id} #${index} ${move.san}: ход ${move.by}, а очередь ${turn}`);
       }
-      const played = chess.move(move.san);
+      let played;
+      try {
+        played = chess.move(move.san);
+      } catch {
+        played = null;
+      }
       if (!played) {
         errors.push(`${line.id} #${index}: нелегальный ${move.san} из ${chess.fen()}`);
         return;
@@ -28,7 +33,12 @@ for (const opening of OPENINGS) {
       if (move.by === 'user' && move.alternatives) {
         for (const alternative of move.alternatives) {
           const branch = new Chess(probe.fen());
-          const played = branch.move(alternative.san);
+          let played;
+          try {
+            played = branch.move(alternative.san);
+          } catch {
+            played = null;
+          }
           if (!played) {
             errors.push(`${line.id}: альтернатива ${alternative.san} нелегальна перед ${move.san}`);
           } else if (played.san !== alternative.san) {
@@ -36,7 +46,12 @@ for (const opening of OPENINGS) {
           }
         }
       }
-      const played = probe.move(move.san);
+      let played;
+      try {
+        played = probe.move(move.san);
+      } catch {
+        played = null;
+      }
       if (!played) break;
     }
 
@@ -44,7 +59,7 @@ for (const opening of OPENINGS) {
     if (last?.by !== 'user') {
       errors.push(`${line.id}: линия должна заканчиваться ходом ученика`);
     }
-    const color = opening.side === 'white' ? 'w' : 'b';
+    const color = side === 'white' ? 'w' : 'b';
     const best = line.next.filter((idea) => idea.best);
     if (best.length !== 1) {
       errors.push(`${line.id}: нужен один лучший ход в next`);
@@ -53,7 +68,11 @@ for (const opening of OPENINGS) {
       const mark = continuationMark(chess.fen(), idea.san, color);
       if (!mark) errors.push(`${line.id}: продолжение ${idea.san} не находится`);
     }
-  }
+}
+
+for (const opening of OPENINGS) {
+  for (const line of opening.lines) check(line, opening.side);
+  for (const line of opening.anti) check(line, studentSide(opening, true));
 }
 
 if (errors.length > 0) {
@@ -61,4 +80,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`ok: ${OPENINGS.reduce((sum, opening) => sum + opening.lines.length, 0)} линий`);
+const total = OPENINGS.reduce((sum, opening) => sum + opening.lines.length + opening.anti.length, 0);
+console.log(`ok: ${total} линий`);

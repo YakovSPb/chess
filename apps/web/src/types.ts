@@ -48,6 +48,7 @@ export type Opening = {
   side: Side;
   preview: string;
   lines: OpeningLine[];
+  anti: OpeningLine[];
 };
 
 export type MoveMark = {

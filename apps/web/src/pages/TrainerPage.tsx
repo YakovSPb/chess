@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
-import { getOpening } from '../data/openings';
+import { getOpening, studentSide } from '../data/openings';
 import { arrowsForIdeas, coversOf } from '../lib/commentArrows';
 import { commentBoard, expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
-import type { BoardArrow, ChatMessage, Opening, OpeningLine, TrainMode } from '../types';
+import type { BoardArrow, ChatMessage, Opening, OpeningLine, Side, TrainMode } from '../types';
 
 let messageSeq = 0;
 
@@ -30,7 +30,10 @@ export function TrainerPage() {
   if (!opening) return <Navigate to="/" replace />;
 
   const requested = params.get('line');
-  const line = opening.lines.find((item) => item.id === requested) ?? opening.lines[0];
+  const against = opening.anti.some((item) => item.id === requested);
+  const pool = against ? opening.anti : opening.lines;
+  const line = pool.find((item) => item.id === requested) ?? pool[0];
+  const side = studentSide(opening, against);
   const mode: TrainMode = params.get('mode') === 'quiz' ? 'quiz' : 'learn';
 
   function updateParams(nextLineId: string, nextMode: TrainMode) {
@@ -45,6 +48,9 @@ export function TrainerPage() {
       key={`${line.id}-${mode}-${attempt}`}
       opening={opening}
       line={line}
+      lines={pool}
+      side={side}
+      against={against}
       mode={mode}
       onRestart={() => setAttempt((value) => value + 1)}
       onMode={(nextMode) => updateParams(line.id, nextMode)}
@@ -56,6 +62,9 @@ export function TrainerPage() {
 function LineSession({
   opening,
   line,
+  lines,
+  side,
+  against,
   mode,
   onRestart,
   onMode,
@@ -63,6 +72,9 @@ function LineSession({
 }: {
   opening: Opening;
   line: OpeningLine;
+  lines: OpeningLine[];
+  side: Side;
+  against: boolean;
   mode: TrainMode;
   onRestart: () => void;
   onMode: (mode: TrainMode) => void;
@@ -176,7 +188,7 @@ function LineSession({
           ? 'Чисто. Линия уйдёт на повторение по интервалу: 1 день, потом 3, 7, 16 и 35.'
           : `Ошибок: ${mistakes}. Завтра эта линия вернётся сама — ошибка сбрасывает интервал.`;
       const fen = positionAt(line.moves, total);
-      const color = opening.side === 'white' ? 'w' : 'b';
+      const color = side === 'white' ? 'w' : 'b';
       const ideas = arrowsForIdeas(fen, line.next, color);
       const arrows = ideas.flatMap((idea) => idea.arrows);
       finaleArrows.current = arrows.length > 0 ? arrows : null;
@@ -226,7 +238,7 @@ function LineSession({
         board: commentBoard(line.moves, ply, move.san),
       },
     ]);
-  }, [done, line, mode, opening.side, ply, total]);
+  }, [done, line, mode, side, ply, total]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -314,8 +326,8 @@ function LineSession({
     return false;
   }
 
-  const lineIndex = opening.lines.findIndex((item) => item.id === line.id);
-  const nextLine = opening.lines[lineIndex + 1];
+  const lineIndex = lines.findIndex((item) => item.id === line.id);
+  const nextLine = lines[lineIndex + 1];
   const live = viewPly === ply;
   const progress = Math.round((Math.min(ply, total) / total) * 100);
 
@@ -338,7 +350,10 @@ function LineSession({
             </Link>
             <div className="min-w-0">
               <h1 className="truncate text-lg font-semibold">{opening.name}</h1>
-              <p className="truncate text-sm text-[var(--muted-foreground)]">{line.name}</p>
+              <p className="truncate text-sm text-[var(--muted-foreground)]">
+                {against ? 'Против тебя · ' : ''}
+                {line.name}
+              </p>
             </div>
           </div>
           <div className="flex shrink-0 rounded-md border border-[var(--chat-border)]">
@@ -381,7 +396,7 @@ function LineSession({
         <div className="order-2 flex min-h-0 items-center justify-center bg-[var(--background)] p-3 md:order-1 md:p-6">
           <ChessBoardView
             fen={fen}
-            orientation={opening.side}
+            orientation={side}
             allowMoves={awaitingUser && live && !done}
             onMove={onMove}
             boardWidth={680}
@@ -392,7 +407,7 @@ function LineSession({
         <aside className="order-1 min-h-0 border-b border-[var(--chat-border)] md:order-2 md:border-b-0 md:border-l">
           <ChatPanel
             messages={messages}
-            lines={opening.lines}
+            lines={lines}
             activeLineId={line.id}
             hasNext={Boolean(nextLine)}
             onLine={onLine}

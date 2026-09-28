@@ -1,4 +1,5 @@
-import type { Opening, OpeningLine, OpponentMove, UserMove } from '../types';
+import type { Opening, OpeningLine, OpponentMove, Side, UserMove } from '../types';
+import { antiCaro, antiItalian, antiLondon, antiQueens } from './anti';
 
 function user(
   san: string,
@@ -1007,6 +1008,7 @@ export const OPENINGS: Opening[] = [
     side: 'white',
     preview: '1.e4 e5 2.Nf3 Nc6 3.Bc4',
     lines: [italianQuiet, italianNf6, italianD4],
+    anti: antiItalian,
   },
   {
     id: 'london',
@@ -1016,6 +1018,7 @@ export const OPENINGS: Opening[] = [
     side: 'white',
     preview: '1.d4 2.Nf3 3.Bf4',
     lines: [londonD5, londonG6, londonQb6],
+    anti: antiLondon,
   },
   {
     id: 'caro',
@@ -1025,6 +1028,7 @@ export const OPENINGS: Opening[] = [
     side: 'black',
     preview: '1.e4 c6 2.d4 d5',
     lines: [caroClassical, caroAdvance, caroExchange],
+    anti: antiCaro,
   },
   {
     id: 'queens',
@@ -1034,6 +1038,7 @@ export const OPENINGS: Opening[] = [
     side: 'black',
     preview: '1.d4 d5 2.c4 e6/c6',
     lines: [qgd, slav, vsLondon],
+    anti: antiQueens,
   },
 ];
 
@@ -1041,6 +1046,14 @@ export function getOpening(id: string | undefined): Opening | undefined {
   return OPENINGS.find((opening) => opening.id === id);
 }
 
-export function allLines(): { opening: Opening; line: OpeningLine }[] {
-  return OPENINGS.flatMap((opening) => opening.lines.map((line) => ({ opening, line })));
+export function allLines(): { opening: Opening; line: OpeningLine; against: boolean }[] {
+  return OPENINGS.flatMap((opening) => [
+    ...opening.lines.map((line) => ({ opening, line, against: false })),
+    ...opening.anti.map((line) => ({ opening, line, against: true })),
+  ]);
+}
+
+export function studentSide(opening: Opening, against: boolean): Side {
+  if (!against) return opening.side;
+  return opening.side === 'white' ? 'black' : 'white';
 }
