@@ -17,7 +17,7 @@ export function HomePage() {
           <div>
             <h1 className="text-2xl font-semibold">Дебюты</h1>
             <p className="mt-1 max-w-xl text-sm text-[var(--muted-foreground)]">
-              Четыре схемы. Учишь позицию и зачем ход, а не длинную цепочку. Справа тренер подсказывает, на доске
+              Пять схем. Учишь позицию и зачем ход, а не длинную цепочку. Справа тренер подсказывает, на доске
               ходишь сам.
             </p>
           </div>

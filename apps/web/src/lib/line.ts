@@ -1,6 +1,17 @@
 import { Chess, type Move, type Square } from 'chess.js';
 import type { CommentBoard, LineMove, MoveMark, Side } from '../types';
 
+export function scoreOf(moves: LineMove[], ply: number): string {
+  const parts: string[] = [];
+  const limit = Math.min(Math.max(ply, 0), moves.length);
+  for (let index = 0; index < limit; index += 1) {
+    const san = moves[index].san;
+    if (index % 2 === 0) parts.push(`${index / 2 + 1}. ${san}`);
+    else parts.push(san);
+  }
+  return parts.join(' ');
+}
+
 export function positionAt(moves: LineMove[], ply: number): string {
   const chess = new Chess();
   for (let index = 0; index < ply; index += 1) {

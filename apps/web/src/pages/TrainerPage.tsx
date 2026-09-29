@@ -4,7 +4,7 @@ import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
 import { getOpening, studentSide } from '../data/openings';
 import { arrowsForIdeas, coversOf } from '../lib/commentArrows';
-import { commentBoard, expectedSquares, positionAt, squaresOfPly, tryUserMove } from '../lib/line';
+import { commentBoard, expectedSquares, positionAt, scoreOf, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, Side, TrainMode } from '../types';
 
@@ -96,6 +96,8 @@ function LineSession({
   const [awaitingUser, setAwaitingUser] = useState(line.moves[0]?.by === 'user');
   const [done, setDone] = useState(false);
   const [miss, setMiss] = useState<{ from: string; to: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
   const prompted = useRef(new Set<number>());
   const saved = useRef(false);
   const errorsRef = useRef(0);
@@ -156,6 +158,7 @@ function LineSession({
     return () => {
       if (previewTimer.current !== null) window.clearTimeout(previewTimer.current);
       if (hideTimer.current !== null) window.clearTimeout(hideTimer.current);
+      if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
     };
   }, []);
 
@@ -326,6 +329,39 @@ function LineSession({
     return false;
   }
 
+  async function copyMoves() {
+    const score = scoreOf(line.moves, viewPly);
+    const who = side === 'white' ? 'белыми' : 'чёрными';
+    const text = [
+      `${opening.name} — ${line.name}`,
+      against ? 'Против тебя' : null,
+      `Играю ${who}`,
+      score ? `Ходы: ${score}` : 'Ходы: начальная позиция',
+      `FEN: ${fen}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    setCopied(true);
+    if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
+    copiedTimer.current = window.setTimeout(() => {
+      copiedTimer.current = null;
+      setCopied(false);
+    }, 1500);
+  }
+
   const lineIndex = lines.findIndex((item) => item.id === line.id);
   const nextLine = lines[lineIndex + 1];
   const live = viewPly === ply;
@@ -373,6 +409,13 @@ function LineSession({
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <IconButton
+              label={copied ? 'Скопировано' : 'Скопировать ходы'}
+              disabled={false}
+              onClick={() => void copyMoves()}
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+            </IconButton>
             <IconButton label="Предыдущий ход" disabled={viewPly === 0} onClick={() => setViewPly((v) => v - 1)}>
               <BackIcon />
             </IconButton>
@@ -474,6 +517,23 @@ function BackIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="9" y="9" width="13" height="13" rx="2" strokeWidth="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
     </svg>
   );
 }
