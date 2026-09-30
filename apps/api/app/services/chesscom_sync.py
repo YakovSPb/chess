@@ -144,6 +144,99 @@ def find_stockfish() -> Path:
     )
 
 
+STOCKFISH_RELEASE_URL = (
+    "https://github.com/official-stockfish/Stockfish/releases/download/"
+    "sf_17.1/stockfish-ubuntu-x86-64-avx2.tar"
+)
+
+
+def ensure_stockfish() -> Path:
+    """Находит Stockfish или один раз скачивает бинарник в tools/stockfish/."""
+    try:
+        return find_stockfish()
+    except FileNotFoundError:
+        pass
+
+    import tarfile
+    import tempfile
+
+    stockfish_dir = repo_root() / "tools" / "stockfish"
+    stockfish_dir.mkdir(parents=True, exist_ok=True)
+    target = stockfish_dir / "stockfish-ubuntu-x86-64-avx2"
+    print(f"Stockfish не найден — скачиваю в {target} …")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        archive = Path(tmp) / "stockfish.tar"
+        req = urllib.request.Request(
+            STOCKFISH_RELEASE_URL,
+            headers={"User-Agent": USER_AGENT},
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp, archive.open("wb") as out:
+            shutil.copyfileobj(resp, out)
+        with tarfile.open(archive, "r") as tar:
+            tar.extractall(path=tmp)
+
+        found: Path | None = None
+        for path in Path(tmp).rglob("stockfish*"):
+            if path.is_file() and "ubuntu" in path.name and path.suffix == "":
+                found = path
+                break
+        if found is None:
+            for path in Path(tmp).rglob("stockfish-ubuntu-x86-64-avx2"):
+                if path.is_file():
+                    found = path
+                    break
+        if found is None:
+            raise FileNotFoundError("Не удалось извлечь Stockfish из архива GitHub")
+        shutil.copy2(found, target)
+
+    target.chmod(target.stat().st_mode | 0o111)
+    link = stockfish_dir / "stockfish"
+    if link.exists() or link.is_symlink():
+        link.unlink()
+    link.symlink_to(target.name)
+    return target
+
+
+def list_library() -> dict:
+    """Список уже скачанных аккаунтов в games/."""
+    root = games_dir()
+    players: list[dict] = []
+    if root.is_dir():
+        for path in sorted(root.iterdir()):
+            index_path = path / "index.json"
+            if not index_path.is_file():
+                continue
+            try:
+                index = json.loads(index_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            players.append(
+                {
+                    "username": index.get("username") or path.name,
+                    "folder": path.name,
+                    "gamesCount": int(index.get("games_count") or len(index.get("games") or [])),
+                    "downloadedAt": index.get("downloaded_at"),
+                }
+            )
+
+    stockfish_ok = False
+    stockfish_path = None
+    try:
+        sf = find_stockfish()
+        stockfish_ok = True
+        stockfish_path = str(sf)
+    except FileNotFoundError:
+        pass
+
+    return {
+        "players": players,
+        "stockfishOk": stockfish_ok,
+        "stockfishPath": stockfish_path,
+        "gamesDir": str(root),
+    }
+
+
 def download_player(username: str, on_progress: ProgressCb | None = None) -> Path:
     nick = username.strip().lstrip("@")
     out_dir = games_dir() / safe_name(nick.lower())
@@ -654,12 +747,14 @@ def sync_players(
         for nick in nicks:
             path = games_dir() / safe_name(nick.lower())
             if not (path / "index.json").is_file():
-                raise FileNotFoundError(f"Нет скачанных партий для {nick}")
+                raise FileNotFoundError(
+                    f"Нет сохранённых партий для {nick}. Сначала нажмите «Обновить с chess.com»."
+                )
             player_dirs.append(path)
 
     if on_progress:
         on_progress("analyze", 42, "Запуск Stockfish…")
-    engine = Stockfish(find_stockfish(), depth=depth)
+    engine = Stockfish(ensure_stockfish(), depth=depth)
     try:
         players: list[dict] = []
         span = 55 / max(len(player_dirs), 1)

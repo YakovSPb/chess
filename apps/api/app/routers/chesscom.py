@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.services.chesscom_jobs import get_job, list_jobs, start_sync_job
-from app.services.chesscom_sync import load_report
+from app.services.chesscom_sync import list_library, load_report
 
 router = APIRouter(prefix="/chesscom", tags=["chesscom"])
 
@@ -12,7 +12,7 @@ class ChesscomSyncRequest(BaseModel):
     depth: int = Field(default=12, ge=8, le=18)
     max_games: int = Field(default=60, ge=5, le=200)
     max_ply: int = Field(default=40, ge=10, le=80)
-    download: bool = True
+    download: bool = False
 
 
 class ChesscomJobResponse(BaseModel):
@@ -25,6 +25,11 @@ class ChesscomJobResponse(BaseModel):
     error: str | None = None
     started_at: str | None = None
     finished_at: str | None = None
+
+
+@router.get("/library")
+def chesscom_library():
+    return list_library()
 
 
 @router.post("/sync", response_model=ChesscomJobResponse)
@@ -67,6 +72,6 @@ def chesscom_report():
             "engineDepth": 0,
             "maxGamesPerPlayer": 0,
             "players": [],
-            "hint": "Введите ники и нажмите «Скачать и разобрать»",
+            "hint": "Сначала «Обновить с chess.com», потом «Разобрать сохранённые».",
         }
     return report

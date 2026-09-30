@@ -42,6 +42,13 @@ async def lifespan(_app: FastAPI):
             print(f"Seeded {added} puzzles (target: 500+ unique)")
     finally:
         db.close()
+    try:
+        from app.services.chesscom_sync import ensure_stockfish
+
+        path = ensure_stockfish()
+        print(f"Stockfish ready: {path}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"Stockfish not ready yet: {exc}")
     yield
 
 

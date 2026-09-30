@@ -14,6 +14,20 @@ export type ChesscomJob = {
   finished_at?: string | null;
 };
 
+export type LibraryPlayer = {
+  username: string;
+  folder: string;
+  gamesCount: number;
+  downloadedAt?: string | null;
+};
+
+export type ChesscomLibrary = {
+  players: LibraryPlayer[];
+  stockfishOk: boolean;
+  stockfishPath?: string | null;
+  gamesDir?: string;
+};
+
 export type SyncOptions = {
   usernames: string[];
   depth?: number;
@@ -45,6 +59,11 @@ export async function fetchGamesReport(): Promise<GamesReport> {
   return readJson<GamesReport>(response);
 }
 
+export async function fetchChesscomLibrary(): Promise<ChesscomLibrary> {
+  const response = await fetch(`${API}/chesscom/library`);
+  return readJson<ChesscomLibrary>(response);
+}
+
 export async function startChesscomSync(options: SyncOptions): Promise<ChesscomJob> {
   const response = await fetch(`${API}/chesscom/sync`, {
     method: 'POST',
@@ -54,7 +73,7 @@ export async function startChesscomSync(options: SyncOptions): Promise<ChesscomJ
       depth: options.depth ?? 12,
       max_games: options.maxGames ?? 60,
       max_ply: options.maxPly ?? 40,
-      download: options.download ?? true,
+      download: options.download ?? false,
     }),
   });
   return readJson<ChesscomJob>(response);

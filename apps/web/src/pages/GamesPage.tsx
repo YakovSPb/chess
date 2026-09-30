@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { MistakeCompareBoards } from '../components/MistakeCompareBoards';
 import {
   fetchChesscomJob,
+  fetchChesscomLibrary,
   fetchGamesReport,
   startChesscomSync,
   type ChesscomJob,
+  type ChesscomLibrary,
 } from '../lib/chesscomApi';
 import type { DevelopmentPlan, GamesReport, MistakeStat, PlayerReport } from '../types/gamesReport';
 
@@ -22,6 +24,7 @@ const PHASE_LABEL: Record<string, string> = {
 };
 
 const DEFAULT_NICKS = 'Yakov_Msk7, misha5161741';
+const NICKS_STORAGE_KEY = 'chesscom-nicks-v1';
 
 function kindClass(kind: string): string {
   if (kind === 'blunder') return 'text-red-400';
@@ -41,12 +44,23 @@ function parseNicks(raw: string): string[] {
     .filter(Boolean);
 }
 
+function loadSavedNicks(): string {
+  try {
+    const saved = localStorage.getItem(NICKS_STORAGE_KEY);
+    if (saved && saved.trim()) return saved;
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_NICKS;
+}
+
 export function GamesPage() {
   const [report, setReport] = useState<GamesReport | null>(null);
+  const [library, setLibrary] = useState<ChesscomLibrary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [playerIndex, setPlayerIndex] = useState(0);
 
-  const [nicks, setNicks] = useState(DEFAULT_NICKS);
+  const [nicks, setNicks] = useState(loadSavedNicks);
   const [maxGames, setMaxGames] = useState(60);
   const [depth, setDepth] = useState(12);
   const [job, setJob] = useState<ChesscomJob | null>(null);
@@ -55,18 +69,27 @@ export function GamesPage() {
 
   const loadReport = useCallback(async () => {
     try {
-      const data = await fetchGamesReport();
+      const [data, lib] = await Promise.all([fetchGamesReport(), fetchChesscomLibrary()]);
       setReport(data);
+      setLibrary(lib);
       setLoadError(null);
       setPlayerIndex(0);
     } catch {
-      setLoadError('Не удалось получить отчёт с сервера. Запущен ли API на :8000?');
+      setLoadError('Не удалось получить отчёт с сервера. Запущен ли API?');
     }
   }, []);
 
   useEffect(() => {
     void loadReport();
   }, [loadReport]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NICKS_STORAGE_KEY, nicks);
+    } catch {
+      /* ignore */
+    }
+  }, [nicks]);
 
   useEffect(() => {
     if (!job || job.status === 'done' || job.status === 'error') return;
@@ -88,7 +111,7 @@ export function GamesPage() {
     return () => window.clearInterval(timer);
   }, [job, loadReport]);
 
-  async function onSync() {
+  async function onSync(download: boolean) {
     const usernames = parseNicks(nicks);
     if (usernames.length === 0) {
       setSyncError('Введите хотя бы один ник chess.com');
@@ -100,15 +123,16 @@ export function GamesPage() {
         usernames,
         maxGames,
         depth,
-        download: true,
+        download,
       });
       setJob(started);
     } catch (err: unknown) {
-      setSyncError(err instanceof Error ? err.message : 'Не удалось запустить sync');
+      setSyncError(err instanceof Error ? err.message : 'Не удалось запустить задачу');
     }
   }
 
   const player = report?.players[playerIndex] ?? null;
+  const hasSavedGames = (library?.players.length ?? 0) > 0;
 
   const openingMistakes = useMemo(() => {
     if (!player) return [] as MistakeStat[];
@@ -136,12 +160,32 @@ export function GamesPage() {
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
         <section className="rounded-xl border border-[var(--chat-border)] bg-[var(--card-bg)] p-4">
           <h2 className="text-sm font-medium tracking-wide text-[var(--muted-foreground)] uppercase">
-            Скачать и разобрать
+            Партии chess.com
           </h2>
           <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-            Пароль не нужен — только публичные ники. Партии сохраняются в `games/`, отчёт обновляется здесь.
+            Партии сохраняются на сервере. Обычно достаточно «Разобрать сохранённые». «Обновить с chess.com»
+            нужно только когда хотите подтянуть новые партии.
           </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_8rem_8rem_auto]">
+          {library && (
+            <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+              {library.players.length > 0 ? (
+                <>
+                  Уже сохранено:{' '}
+                  {library.players
+                    .map((item) => `${item.username} (${item.gamesCount})`)
+                    .join(', ')}
+                </>
+              ) : (
+                <>Пока ничего не скачано — сначала нажмите «Обновить с chess.com».</>
+              )}
+              {!library.stockfishOk && (
+                <span className="mt-1 block text-amber-300">
+                  Stockfish ещё не установлен на сервере — при разборе скачается сам (первый раз подольше).
+                </span>
+              )}
+            </p>
+          )}
+          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_8rem_8rem]">
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-[var(--muted-foreground)]">Ники через запятую</span>
               <input
@@ -176,17 +220,30 @@ export function GamesPage() {
                 className="rounded-lg border border-[var(--chat-border)] bg-[var(--background)] px-3 py-2"
               />
             </label>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() => void onSync()}
-                disabled={syncing}
-                className="w-full rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-              >
-                {syncing ? 'Идёт…' : 'Скачать и разобрать'}
-              </button>
-            </div>
           </div>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => void onSync(false)}
+              disabled={syncing}
+              className="flex-1 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            >
+              {syncing ? 'Идёт…' : 'Разобрать сохранённые'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onSync(true)}
+              disabled={syncing}
+              className="flex-1 rounded-lg border border-[var(--chat-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--hover-bg)] disabled:opacity-50"
+            >
+              {syncing ? 'Идёт…' : 'Обновить с chess.com'}
+            </button>
+          </div>
+          {!hasSavedGames && (
+            <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+              Подсказка: первый раз нажмите «Обновить с chess.com», потом пользуйтесь «Разобрать сохранённые».
+            </p>
+          )}
 
           {(job || syncError) && (
             <div className="mt-4 space-y-2">
