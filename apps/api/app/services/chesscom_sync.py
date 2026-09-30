@@ -60,10 +60,19 @@ ECO_BY_MOVES: dict[str, tuple[str, str]] = {
 
 
 def repo_root() -> Path:
+    """Корень monorepo: settings → поиск вверх → запасной parents[4]."""
     if settings.repo_root.strip():
-        return Path(settings.repo_root).expanduser().resolve()
-    # apps/api/app/services/this.py → parents[4] = monorepo root
-    return Path(__file__).resolve().parents[4]
+        configured = Path(settings.repo_root).expanduser().resolve()
+        if (configured / "tools").is_dir() or (configured / "games").is_dir():
+            return configured
+
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "docker-compose.yml").is_file() and (parent / "apps").is_dir():
+            return parent
+        if (parent / "tools" / "stockfish").is_dir():
+            return parent
+    return here.parents[4]
 
 
 def games_dir() -> Path:
@@ -72,7 +81,9 @@ def games_dir() -> Path:
 
 def report_path() -> Path:
     if settings.games_report_path.strip():
-        return Path(settings.games_report_path).expanduser().resolve()
+        path = Path(settings.games_report_path).expanduser().resolve()
+        if path.parent.is_dir():
+            return path
     return repo_root() / "apps" / "web" / "public" / "games-report.json"
 
 
@@ -87,24 +98,49 @@ def safe_name(value: str) -> str:
 
 
 def find_stockfish() -> Path:
+    candidates: list[Path] = []
+
     if settings.stockfish_path.strip():
-        path = Path(settings.stockfish_path).expanduser()
-        if path.is_file() and os.access(path, os.X_OK):
-            return path
+        candidates.append(Path(settings.stockfish_path).expanduser())
     env = os.environ.get("STOCKFISH_PATH")
-    if env and Path(env).is_file():
-        return Path(env)
+    if env:
+        candidates.append(Path(env))
+
     root = repo_root()
-    candidates = [
-        root / "tools" / "stockfish" / "stockfish-ubuntu-x86-64-avx2",
-        root / "tools" / "stockfish",
-        Path(shutil.which("stockfish") or ""),
-    ]
+    stockfish_dir = root / "tools" / "stockfish"
+    candidates.extend(
+        [
+            stockfish_dir / "stockfish",
+            stockfish_dir / "stockfish-ubuntu-x86-64-avx2",
+            stockfish_dir / "stockfish-ubuntu-x86-64",
+            root / "tools" / "stockfish",
+        ]
+    )
+    if stockfish_dir.is_dir():
+        candidates.extend(sorted(stockfish_dir.glob("stockfish*")))
+
+    which = shutil.which("stockfish")
+    if which:
+        candidates.append(Path(which))
+
+    seen: set[str] = set()
     for candidate in candidates:
-        if candidate and candidate.is_file() and os.access(candidate, os.X_OK):
+        if not candidate:
+            continue
+        resolved = str(candidate)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if candidate.is_file() and os.access(candidate, os.X_OK) and "stockfish" in candidate.name.lower():
+            # пропускаем .md/.txt из архива исходников
+            if candidate.suffix.lower() in {".md", ".txt", ".cff", ".h", ".cpp"}:
+                continue
             return candidate
+
     raise FileNotFoundError(
-        "Stockfish не найден. Положите бинарник в tools/stockfish/ или задайте STOCKFISH_PATH."
+        "Stockfish не найден. Ожидается файл "
+        f"{stockfish_dir / 'stockfish-ubuntu-x86-64-avx2'} "
+        "или переменная STOCKFISH_PATH."
     )
 
 
