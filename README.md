@@ -27,4 +27,12 @@ npx tsx scripts/validate-openings.ts
 - **Проверка** — ход нужно вспомнить самому
 - Ошибка возвращает линию на завтра. Чистый проход уходит на 1, 3, 7, 16 и 35 дней
 
-Подробнее: [docs/architecture.md](docs/architecture.md), [docs/features.md](docs/features.md).
+## Партии с chess.com
+
+```bash
+apps/api/.venv/bin/python scripts/chesscom_games.py all ВАШ_НИК НИК_СЫНА
+```
+
+PGN лягут в `games/`, отчёт — в `apps/web/public/games-report.json`. В приложении откройте **Мои партии**.
+
+Подробнее: [docs/architecture.md](docs/architecture.md), [docs/features.md](docs/features.md), [docs/games-analysis.md](docs/games-analysis.md).

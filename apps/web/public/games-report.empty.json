@@ -1,0 +1,7 @@
+{
+  "generatedAt": null,
+  "engineDepth": 0,
+  "maxGamesPerPlayer": 0,
+  "players": [],
+  "hint": "Запустите: apps/api/.venv/bin/python scripts/chesscom_games.py all ВАШ_НИК НИК_СЫНА"
+}

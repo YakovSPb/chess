@@ -21,12 +21,20 @@ export function HomePage() {
               ходишь сам.
             </p>
           </div>
-          <Link
-            to="/review"
-            className="shrink-0 rounded-lg border border-[var(--chat-border)] px-3 py-2 text-sm hover:bg-[var(--hover-bg)]"
-          >
-            Повторение{dueCount > 0 ? ` · ${dueCount}` : ''}
-          </Link>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link
+              to="/games"
+              className="rounded-lg border border-[var(--chat-border)] px-3 py-2 text-sm hover:bg-[var(--hover-bg)]"
+            >
+              Мои партии
+            </Link>
+            <Link
+              to="/review"
+              className="rounded-lg border border-[var(--chat-border)] px-3 py-2 text-sm hover:bg-[var(--hover-bg)]"
+            >
+              Повторение{dueCount > 0 ? ` · ${dueCount}` : ''}
+            </Link>
+          </div>
         </div>
       </header>
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">

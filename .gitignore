@@ -32,6 +32,12 @@ postgres_data/
 lichess_db_puzzle.csv.zst
 *.csv.zst
 
+# Локальные партии chess.com и отчёт анализа
+games/
+apps/web/public/games-report.json
+tools/stockfish.tar
+tools/stockfish/
+
 # Logs
 logs/
 *.log
