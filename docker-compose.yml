@@ -30,11 +30,17 @@ services:
       OPENAI_API_URL: ${OPENAI_API_URL:-https://api.openai.com/v1}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      REPO_ROOT: /repo
+      STOCKFISH_PATH: /repo/tools/stockfish/stockfish-ubuntu-x86-64-avx2
+      GAMES_REPORT_PATH: /repo/apps/web/public/games-report.json
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - ./apps/api:/app
+      - ./games:/repo/games
+      - ./tools:/repo/tools
+      - ./apps/web/public:/repo/apps/web/public
       - ./.env:/app/.env:ro
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 

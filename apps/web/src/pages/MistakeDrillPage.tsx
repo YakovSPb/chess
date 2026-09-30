@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Chess } from 'chess.js';
 import { ChessBoardView } from '../components/ChessBoardView';
+import { fetchGamesReport } from '../lib/chesscomApi';
 import { tryUserMove } from '../lib/line';
 import type { BoardArrow } from '../types';
 import type { GamesReport, MistakeStat, PlayerReport } from '../types/gamesReport';
@@ -31,15 +32,7 @@ export function MistakeDrillPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/games-report.json')
-      .then(async (response) => {
-        const text = await response.text();
-        try {
-          return JSON.parse(text) as GamesReport;
-        } catch {
-          throw new Error('no report');
-        }
-      })
+    fetchGamesReport()
       .then((data) => {
         if (!cancelled) setReport(data);
       })

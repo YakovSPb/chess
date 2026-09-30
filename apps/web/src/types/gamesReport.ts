@@ -40,6 +40,24 @@ export type MistakeStat = {
   examples: MistakeExample[];
 };
 
+export type PlanPriority = {
+  title: string;
+  why: string;
+  action: string;
+  mistakeIds: string[];
+  tag?: string;
+};
+
+export type DevelopmentPlan = {
+  headline: string;
+  summary: string;
+  priorities: PlanPriority[];
+  strengths: string[];
+  weeklyPlan: string[];
+  focusPhase?: string;
+  winRate?: number;
+};
+
 export type PlayerReport = {
   username: string;
   analyzedGames: number;
@@ -47,6 +65,7 @@ export type PlayerReport = {
   results: GameResultBucket;
   openings: OpeningStat[];
   mistakes: MistakeStat[];
+  plan?: DevelopmentPlan;
 };
 
 export type GamesReport = {

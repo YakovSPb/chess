@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     # Personal token с https://lichess.org/account/oauth/token — для частых ходов в дебютах
     lichess_api_token: str = ""
+    # Корень monorepo (games/, tools/). В Docker задайте явно.
+    repo_root: str = ""
+    stockfish_path: str = ""
+    games_report_path: str = ""
 
     @property
     def llm_model(self) -> str:

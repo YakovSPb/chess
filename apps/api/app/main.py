@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.models import Lesson
-from app.routers import auth, championships, coach, games, lessons, openings, puzzles
+from app.routers import auth, championships, chesscom, coach, games, lessons, openings, puzzles
 from app.services.lessons_data import LESSONS
 from app.services.seed import seed_test_admin
 from app.services.seed_championships import seed_championships
@@ -63,6 +63,7 @@ app.include_router(coach.router)
 app.include_router(lessons.router)
 app.include_router(openings.router)
 app.include_router(championships.router)
+app.include_router(chesscom.router)
 
 
 @app.get("/health")

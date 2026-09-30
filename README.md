@@ -29,10 +29,6 @@ npx tsx scripts/validate-openings.ts
 
 ## Партии с chess.com
 
-```bash
-apps/api/.venv/bin/python scripts/chesscom_games.py all ВАШ_НИК НИК_СЫНА
-```
-
-PGN лягут в `games/`, отчёт — в `apps/web/public/games-report.json`. В приложении откройте **Мои партии**.
+На странице **Мои партии** введите ники и нажмите «Скачать и разобрать» (нужен запущенный API).
 
 Подробнее: [docs/architecture.md](docs/architecture.md), [docs/features.md](docs/features.md), [docs/games-analysis.md](docs/games-analysis.md).

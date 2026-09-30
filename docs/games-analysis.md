@@ -1,41 +1,41 @@
 # Анализ партий chess.com
 
-Публичный API chess.com отдаёт архивы PGN без пароля — достаточно ника.
+Пароль не нужен — публичный API по нику. Загрузка и разбор запускаются **из браузера** на странице **Мои партии**.
 
-## Быстрый старт
+## Онлайн (основной способ)
 
-```bash
-# один раз: Stockfish уже лежит в tools/ после setup, либо:
-# curl -L ... → tools/stockfish-ubuntu-x86-64-avx2
-
-apps/api/.venv/bin/python scripts/chesscom_games.py all YOUR_NICK SON_NICK --depth 12 --max-games 60
-```
-
-Партии: `games/<ник>/pgn/*.pgn` и `games/<ник>/index.json`.  
-Отчёт для UI: `apps/web/public/games-report.json`.
-
-Только скачать:
+1. Поднимите API (нужны Postgres + Stockfish):
 
 ```bash
-apps/api/.venv/bin/python scripts/chesscom_games.py download YOUR_NICK SON_NICK
+# вариант: локально без Docker API-процесса, если БД уже на :15432
+cd apps/api
+../api/.venv/bin/uvicorn app.main:app --reload --port 8000
+# или из корня:
+apps/api/.venv/bin/uvicorn app.main:app --app-dir apps/api --reload --port 8000
 ```
 
-Только пересчитать анализ:
+Удобнее через docker-compose (монтирует `games/`, `tools/`, отчёт):
 
 ```bash
-apps/api/.venv/bin/python scripts/chesscom_games.py analyze --depth 12 --max-games 80
+docker compose up -d
 ```
 
-Свой путь к движку: `STOCKFISH_PATH=/path/to/stockfish ...`.
+2. Фронт: `cd apps/web && npm run dev`
+3. Откройте http://localhost:5173/games  
+4. Ники → **Скачать и разобрать** → прогресс → отчёт и тренировка ошибок.
 
-## Что получается в приложении
+API:
 
-Раздел **Мои партии** (`/games`):
+- `POST /chesscom/sync` — старт `{ usernames, depth, max_games }`
+- `GET /chesscom/jobs/{id}` — прогресс
+- `GET /chesscom/report` — готовый отчёт
 
-- частые дебюты по сторонам и результат
-- перечень повторяющихся неточностей / ошибок / зевков
-- тренировка: позиция до хода → найти лучший ход Stockfish
+Прокси Vite: `/api` → `http://localhost:8000`.
 
-Глубина 12 и 60 партий — разумный старт (минуты на игрока). Для точнее: `--depth 15 --max-games 120`.
+## CLI (если нужно без UI)
 
-Ники и PGN в `games/` в git не коммитятся (см. `.gitignore`). Отчёт `games-report.json` тоже локальный.
+```bash
+apps/api/.venv/bin/python scripts/chesscom_games.py all Yakov_Msk7 misha5161741
+```
+
+PGN: `games/<ник>/`. Отчёт: `apps/web/public/games-report.json`.

@@ -42,4 +42,4 @@ docs/       Как устроен продукт
 
 `react-chessboard` рисует доску, `chess.js` считает ходы. Свободная игра на доске в тренажёр не входит.
 
-Анализ своих партий с chess.com — офлайн-скрипт `scripts/chesscom_games.py` + Stockfish в `tools/`. Результат читает фронт из `apps/web/public/games-report.json`. Подробнее: [games-analysis.md](games-analysis.md).
+Анализ своих партий с chess.com — API `POST /chesscom/sync` (фон) + Stockfish. UI: `/games`. Подробнее: [games-analysis.md](games-analysis.md).
