@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MistakeCompareBoards } from '../components/MistakeCompareBoards';
 import {
   fetchChesscomJob,
   fetchGamesReport,
@@ -248,7 +249,13 @@ export function GamesPage() {
               </p>
             </section>
 
-            {player.plan && <DevelopmentPlanCard plan={player.plan} username={player.username} />}
+            {player.plan && (
+              <DevelopmentPlanCard
+                plan={player.plan}
+                username={player.username}
+                mistakes={player.mistakes}
+              />
+            )}
 
             <section>
               <h2 className="mb-3 text-sm font-medium tracking-wide text-[var(--muted-foreground)] uppercase">
@@ -307,8 +314,13 @@ export function GamesPage() {
                 )}
               </div>
               <ul className="flex flex-col gap-3">
-                {player.mistakes.map((mistake) => (
-                  <MistakeCard key={mistake.id} mistake={mistake} username={player.username} />
+                {player.mistakes.map((mistake, index) => (
+                  <MistakeCard
+                    key={mistake.id}
+                    mistake={mistake}
+                    username={player.username}
+                    showBoard={index < 8}
+                  />
                 ))}
               </ul>
               {player.mistakes.length === 0 && (
@@ -338,9 +350,15 @@ export function GamesPage() {
                       </p>
                       <p className="mt-1 text-[var(--muted-foreground)]">
                         Играли <span className="font-mono text-[var(--foreground)]">{mistake.played}</span>, лучше{' '}
-                        <span className="font-mono text-[var(--foreground)]">{mistake.best}</span> · −{mistake.lossCp}{' '}
-                        cp · ×{mistake.count}
+                        <span className="font-mono text-[var(--foreground)]">{mistake.best}</span> · ×{mistake.count}
                       </p>
+                      <MistakeCompareBoards
+                        fen={mistake.fen}
+                        played={mistake.played}
+                        best={mistake.best}
+                        boardWidth={160}
+                        className="mt-3"
+                      />
                       <Link
                         to={`/games/drill/${mistake.id}?player=${encodeURIComponent(player.username)}`}
                         className="mt-3 inline-block text-[var(--accent)] hover:underline"
@@ -359,37 +377,91 @@ export function GamesPage() {
   );
 }
 
-function DevelopmentPlanCard({ plan, username }: { plan: DevelopmentPlan; username: string }) {
+function DevelopmentPlanCard({
+  plan,
+  username,
+  mistakes,
+}: {
+  plan: DevelopmentPlan;
+  username: string;
+  mistakes: MistakeStat[];
+}) {
+  const byId = useMemo(() => {
+    const map = new Map<string, MistakeStat>();
+    for (const item of mistakes) map.set(item.id, item);
+    return map;
+  }, [mistakes]);
+
+  const featured = useMemo(() => {
+    for (const item of plan.priorities) {
+      const id = item.mistakeIds[0];
+      if (id && byId.has(id)) return byId.get(id) ?? null;
+    }
+    return mistakes[0] ?? null;
+  }, [plan.priorities, byId, mistakes]);
+
   return (
     <section className="rounded-xl border border-[var(--accent)]/40 bg-[var(--card-bg)] p-5">
       <p className="text-xs font-medium tracking-wide text-[var(--accent)] uppercase">План развития</p>
       <h2 className="mt-1 text-xl font-semibold">{plan.headline}</h2>
       <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">{plan.summary}</p>
 
+      {featured && (
+        <div className="mt-5 rounded-lg border border-[var(--chat-border)] bg-[var(--background)] p-3">
+          <p className="mb-3 text-sm font-medium">
+            Частая ошибка на картинке: {featured.played} → лучше {featured.best}
+          </p>
+          <MistakeCompareBoards
+            fen={featured.fen}
+            played={featured.played}
+            best={featured.best}
+            boardWidth={220}
+          />
+          <Link
+            to={`/games/drill/${featured.id}?player=${encodeURIComponent(username)}`}
+            className="mt-3 inline-block text-sm text-[var(--accent)] hover:underline"
+          >
+            Потренировать эту позицию
+          </Link>
+        </div>
+      )}
+
       {plan.priorities.length > 0 && (
         <div className="mt-5">
           <h3 className="mb-2 text-sm font-medium">На что обратить внимание</h3>
           <ol className="flex flex-col gap-3">
-            {plan.priorities.map((item, index) => (
-              <li key={item.title} className="rounded-lg border border-[var(--chat-border)] bg-[var(--background)] p-3">
-                <p className="text-sm font-medium">
-                  {index + 1}. {item.title}
-                </p>
-                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{item.why}</p>
-                <p className="mt-1 text-sm">
-                  <span className="text-[var(--muted-foreground)]">Что делать: </span>
-                  {item.action}
-                </p>
-                {item.mistakeIds[0] && (
-                  <Link
-                    to={`/games/drill/${item.mistakeIds[0]}?player=${encodeURIComponent(username)}`}
-                    className="mt-2 inline-block text-sm text-[var(--accent)] hover:underline"
-                  >
-                    Потренировать на доске
-                  </Link>
-                )}
-              </li>
-            ))}
+            {plan.priorities.map((item, index) => {
+              const linked = item.mistakeIds[0] ? byId.get(item.mistakeIds[0]) : undefined;
+              return (
+                <li key={item.title} className="rounded-lg border border-[var(--chat-border)] bg-[var(--background)] p-3">
+                  <p className="text-sm font-medium">
+                    {index + 1}. {item.title}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">{item.why}</p>
+                  <p className="mt-1 text-sm">
+                    <span className="text-[var(--muted-foreground)]">Что делать: </span>
+                    {item.action}
+                  </p>
+                  {linked && index > 0 && index < 3 && (
+                    <MistakeCompareBoards
+                      fen={linked.fen}
+                      played={linked.played}
+                      best={linked.best}
+                      boardWidth={180}
+                      className="mt-3"
+                    />
+                  )}
+                  {item.mistakeIds[0] && (
+                    <Link
+                      to={`/games/drill/${item.mistakeIds[0]}?player=${encodeURIComponent(username)}`}
+                      className="mt-2 inline-block text-sm text-[var(--accent)] hover:underline"
+                    >
+                      Потренировать на доске
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}
@@ -416,7 +488,15 @@ function DevelopmentPlanCard({ plan, username }: { plan: DevelopmentPlan; userna
   );
 }
 
-function MistakeCard({ mistake, username }: { mistake: MistakeStat; username: string }) {
+function MistakeCard({
+  mistake,
+  username,
+  showBoard = true,
+}: {
+  mistake: MistakeStat;
+  username: string;
+  showBoard?: boolean;
+}) {
   return (
     <li className="rounded-xl border border-[var(--chat-border)] bg-[var(--card-bg)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -433,7 +513,7 @@ function MistakeCard({ mistake, username }: { mistake: MistakeStat; username: st
             <span className="font-mono">{mistake.best}</span>
             <span className="text-[var(--muted-foreground)]">
               {' '}
-              · −{mistake.lossCp} cp · повторов {mistake.count}
+              · повторов {mistake.count}
             </span>
           </p>
           {mistake.tip && <p className="mt-2 text-sm text-[var(--muted-foreground)]">{mistake.tip}</p>}
@@ -445,6 +525,15 @@ function MistakeCard({ mistake, username }: { mistake: MistakeStat; username: st
           Тренировать
         </Link>
       </div>
+      {showBoard && (
+        <MistakeCompareBoards
+          fen={mistake.fen}
+          played={mistake.played}
+          best={mistake.best}
+          boardWidth={200}
+          className="mt-4"
+        />
+      )}
     </li>
   );
 }
