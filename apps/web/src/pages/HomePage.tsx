@@ -11,7 +11,14 @@ import {
   trackProgress,
   unlockHint,
 } from '../lib/curriculumProgress';
-import { dueLabel, isDue } from '../lib/srs';
+import {
+  PASS_STREAK,
+  dueLabel,
+  isDue,
+  lineMastery,
+  masteryColorClass,
+  masteryLabel,
+} from '../lib/srs';
 import type { CurriculumLevel, CurriculumTrack, LessonStatus, Opening } from '../types';
 
 export function HomePage() {
@@ -44,7 +51,8 @@ export function HomePage() {
             <h1 className="text-2xl font-semibold">Школа дебютов</h1>
             <p className="mt-1 max-w-xl text-sm text-[var(--muted-foreground)]">
               Семейные блоки: сначала все варианты и фишки одного дебюта (за тебя и против тебя),
-              потом следующий дебют. Сдача — только в «Проверке» без ошибок.
+              потом следующий дебют. Линия: {PASS_STREAK} чистые «Проверки» подряд —
+              оранжевый → жёлтый → зелёный; зелёный фиксируется.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
@@ -187,13 +195,27 @@ function LessonCard({
       <h4 className="font-medium">{opening.name}</h4>
       <p className="mt-1 font-mono text-xs text-[var(--muted-foreground)]">{opening.preview}</p>
       <p className="mt-2 line-clamp-3 text-sm text-[var(--muted-foreground)]">{opening.description}</p>
+      {!locked && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5" title="Прогресс линий: серый → оранжевый → жёлтый → зелёный">
+          {[...opening.lines, ...opening.anti].map((line) => {
+            const level = lineMastery(line.id);
+            return (
+              <span
+                key={line.id}
+                title={`${line.name}: ${masteryLabel(level)}`}
+                className={`inline-block h-2.5 w-2.5 rounded-full ${masteryColorClass(level)}`}
+              />
+            );
+          })}
+        </div>
+      )}
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-        Линии: {passed.done}/{passed.total}
+        Зелёных: {passed.done}/{passed.total}
         {antiPassed.total > 0
           ? ` (за тебя ${passed.done - antiPassed.done}/${passed.total - antiPassed.total}, против ${antiPassed.done}/${antiPassed.total})`
           : ''}
         {!done && !locked && passed.done < passed.total
-          ? ' — сдайте все линии, чтобы открыть следующий шаг блока'
+          ? ` — по ${PASS_STREAK} чистые проверки на линию, чтобы открыть следующий шаг`
           : null}
         {!locked && first ? (
           <>

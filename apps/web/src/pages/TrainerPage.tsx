@@ -16,7 +16,15 @@ import {
   unlockHint,
 } from '../lib/curriculumProgress';
 import { commentBoard, expectedSquares, positionAt, scoreOf, squaresOfPly, tryUserMove } from '../lib/line';
-import { recordAttempt } from '../lib/srs';
+import {
+  PASS_STREAK,
+  lineMastery,
+  masteryColorClass,
+  masteryLabel,
+  masteryProgressNote,
+  masteryTextClass,
+  recordAttempt,
+} from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, Side, TrainMode } from '../types';
 
 let messageSeq = 0;
@@ -229,32 +237,38 @@ function LineSession({
       setDone(true);
       setAwaitingUser(false);
 
+      const mastery = lineMastery(line.id);
       let schoolNote = '';
       if (mode === 'learn') {
         schoolNote =
-          'Это режим «Учить». В школу засчитывается только «Проверка» без ошибок — и линии «за тебя», и «против тебя».';
+          `Это режим «Учить». В школу засчитывается только «Проверка» без ошибок — ${PASS_STREAK} раза подряд до зелёного (линии «за тебя» и «против тебя»).`;
       } else if (mistakes === 0) {
         const progress = openingPassedCount(opening.id);
         if (isOpeningCompleted(opening.id)) {
           const nextId = neighbors.next;
           schoolNote = nextId
-            ? `Урок сдан целиком (${progress.done}/${progress.total}). Дальше в этом блоке: следующий шаг семьи, не новый дебют сразу.`
-            : `Урок сдан (${progress.done}/${progress.total}). Блок можно закрывать, если сданы все уроки блока.`;
+            ? `Урок сдан целиком (${progress.done}/${progress.total} зелёных). Дальше в этом блоке: следующий шаг семьи, не новый дебют сразу.`
+            : `Урок сдан (${progress.done}/${progress.total} зелёных). Блок можно закрывать, если сданы все уроки блока.`;
         } else {
           const leftMain = opening.lines.filter((item) => !isLinePassed(item.id)).length;
           const leftAnti = opening.anti.filter((item) => !isLinePassed(item.id)).length;
-          schoolNote = `Урок: ${progress.done}/${progress.total}. Осталось «за тебя»: ${leftMain}, «против тебя»: ${leftAnti}. Следующий шаг блока откроется после всех линий.`;
+          schoolNote = `Урок: ${progress.done}/${progress.total} зелёных. Осталось «за тебя»: ${leftMain}, «против тебя»: ${leftAnti}.`;
         }
       } else {
-        schoolNote = `Ошибок: ${mistakes}. Линия не засчитана — пройди её в «Проверке» чисто.`;
+        schoolNote =
+          mastery >= PASS_STREAK
+            ? `Ошибок: ${mistakes}. Зелёный сохранён, но интервал повторения сброшен.`
+            : `Ошибок: ${mistakes}. Счётчик сброшен: ${masteryLabel(mastery)}. Нужно ${PASS_STREAK} чистые проверки подряд.`;
       }
 
       const tail =
         mistakes === 0 && mode === 'quiz'
-          ? 'Чисто. Линия уйдёт на повторение: 1 день, потом 3, 7, 16 и 35.'
+          ? mastery >= PASS_STREAK
+            ? `${masteryProgressNote(mastery)} Уйдёт на повторение: 1 день, потом 3, 7, 16 и 35.`
+            : `Чисто. ${masteryProgressNote(mastery)}`
           : mistakes === 0
             ? 'Линия пройдена в режиме обучения.'
-            : `Ошибок: ${mistakes}. При чистой проверке интервал не сбросится.`;
+            : `Ошибок: ${mistakes}. При чистой проверке счётчик растёт: оранжевый → жёлтый → зелёный.`;
 
       const fen = positionAt(line.moves, total);
       const color = side === 'white' ? 'w' : 'b';
@@ -469,6 +483,10 @@ function LineSession({
               <p className="truncate text-sm text-[var(--muted-foreground)]">
                 {against ? 'Против тебя · ' : ''}
                 {line.name}
+                {' · '}
+                <span className={masteryTextClass(lineMastery(line.id))}>
+                  {masteryLabel(lineMastery(line.id))}
+                </span>
               </p>
             </div>
           </div>

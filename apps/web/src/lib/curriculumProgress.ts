@@ -1,6 +1,6 @@
 import { CURRICULUM, findLesson, flatLessons, trackOf } from '../data/curriculum';
 import { getOpening } from '../data/openings';
-import { getSrs } from './srs';
+import { PASS_STREAK, lineMastery } from './srs';
 import type { CurriculumLevel, CurriculumTrack, LessonStatus, Opening } from '../types';
 
 const STORAGE_KEY = 'opening-curriculum-v1';
@@ -33,9 +33,9 @@ export function rememberLesson(openingId: string) {
   writeMeta({ ...readMeta(), lastOpeningId: openingId });
 }
 
+/** Линия сдана в школу: зелёный = PASS_STREAK чистых проверок подряд. */
 export function isLinePassed(lineId: string): boolean {
-  const entry = getSrs(lineId);
-  return Boolean(entry && entry.step >= 1);
+  return lineMastery(lineId) >= PASS_STREAK;
 }
 
 /** Урок сдан: все линии «за тебя» и «против тебя». */
@@ -153,7 +153,7 @@ export function unlockHint(openingId: string): string {
     const prevId = track.openingIds[place.indexInTrack - 1];
     const prevOpening = getOpening(prevId);
     const progress = openingPassedCount(prevId);
-    return `Сначала сдай урок «${prevOpening?.name ?? prevId}»: все линии «за тебя» и «против тебя» в «Проверке» без ошибок (сейчас ${progress.done}/${progress.total}).`;
+    return `Сначала сдай урок «${prevOpening?.name ?? prevId}»: все линии «за тебя» и «против тебя» — по ${PASS_STREAK} чистые «Проверки» подряд до зелёного (сейчас ${progress.done}/${progress.total}).`;
   }
 
   return 'Урок пока закрыт.';

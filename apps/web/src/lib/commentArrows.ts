@@ -149,17 +149,13 @@ function coverArrowsOn(chess: Chess, square: string): BoardArrow[] {
   const piece = chess.get(square as Square);
   if (!piece) return [];
   const attacks = attacksOf(chess, square);
+  // Только реальная «прикрытость»: своя центральная пешка под защитой.
+  // Пустые поля атаки (у пешки c5/e5) не рисуем — это путает с планом хода.
   const centralFriends = attacks.filter((target) => {
     const occupant = chess.get(target as Square);
     return occupant?.type === 'p' && occupant.color === piece.color && CENTER.has(target);
   });
-  const targets =
-    centralFriends.length > 0
-      ? centralFriends
-      : piece.type === 'p'
-        ? attacks.filter((target) => CENTER.has(target))
-        : [];
-  return targets.slice(0, 4).map((target) => ({
+  return centralFriends.slice(0, 4).map((target) => ({
     startSquare: square,
     endSquare: target,
     color: HOLD,

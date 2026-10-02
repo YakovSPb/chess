@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { arrowsForSentence, splitComment } from '../lib/commentArrows';
+import { PASS_STREAK, lineMastery, masteryColorClass, masteryLabel } from '../lib/srs';
 import type { BoardArrow, ChatMessage, OpeningLine } from '../types';
 
 interface ChatPanelProps {
@@ -43,18 +44,22 @@ export function ChatPanel({
         <div className="flex flex-wrap gap-2">
           {lines.map((line, index) => {
             const active = line.id === activeLineId;
+            const mastery = lineMastery(line.id);
             return (
               <button
                 key={line.id}
                 type="button"
+                title={`${line.name}: ${masteryLabel(mastery)}`}
                 onClick={() => onLine(line.id)}
-                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
                   active
                     ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
                     : 'border-[var(--chat-border)] text-[var(--foreground)] hover:bg-[var(--hover-bg)]'
                 }`}
               >
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${masteryColorClass(mastery)}`} />
                 {index + 1}. {line.name}
+                {mastery > 0 ? ` ${mastery}/${PASS_STREAK}` : ''}
               </button>
             );
           })}
