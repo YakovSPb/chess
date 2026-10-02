@@ -3,7 +3,14 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { ChatPanel } from '../components/ChatPanel';
 import { ChessBoardView } from '../components/ChessBoardView';
 import { getOpening, studentSide } from '../data/openings';
+import { neighborLessons, trackOf } from '../data/curriculum';
 import { arrowsForIdeas, coversOf } from '../lib/commentArrows';
+import {
+  isOpeningUnlocked,
+  lessonStatus,
+  rememberLesson,
+  unlockHint,
+} from '../lib/curriculumProgress';
 import { commentBoard, expectedSquares, positionAt, scoreOf, squaresOfPly, tryUserMove } from '../lib/line';
 import { recordAttempt } from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, Side, TrainMode } from '../types';
@@ -28,6 +35,7 @@ export function TrainerPage() {
   const [attempt, setAttempt] = useState(0);
 
   if (!opening) return <Navigate to="/" replace />;
+  if (!isOpeningUnlocked(opening.id)) return <Navigate to="/" replace />;
 
   const requested = params.get('line');
   const against = opening.anti.some((item) => item.id === requested);
@@ -81,6 +89,13 @@ function LineSession({
   onLine: (lineId: string) => void;
 }) {
   const navigate = useNavigate();
+  const trackCtx = trackOf(opening.id);
+  const neighbors = neighborLessons(opening.id);
+
+  useEffect(() => {
+    rememberLesson(opening.id);
+  }, [opening.id]);
+
   const total = line.moves.length;
   const [ply, setPly] = useState(0);
   const [viewPly, setViewPly] = useState(0);
@@ -401,6 +416,77 @@ function LineSession({
             </ModeButton>
           </div>
         </div>
+        {trackCtx && (
+          <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              disabled={!neighbors.prev || !isOpeningUnlocked(neighbors.prev)}
+              onClick={() => {
+                if (!neighbors.prev || !isOpeningUnlocked(neighbors.prev)) return;
+                const prevOpening = getOpening(neighbors.prev);
+                const first = prevOpening?.lines[0];
+                if (prevOpening && first) {
+                  navigate(`/openings/${prevOpening.id}?line=${first.id}&mode=${mode}`);
+                }
+              }}
+              className="shrink-0 rounded-md border border-[var(--chat-border)] px-2 py-1 text-xs disabled:opacity-40"
+            >
+              ← Урок
+            </button>
+            <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+              {trackCtx.track.openingIds.map((id) => {
+                const item = getOpening(id);
+                if (!item) return null;
+                const status = lessonStatus(id);
+                const active = id === opening.id;
+                const locked = status === 'locked';
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    title={locked ? unlockHint(id) : item.name}
+                    disabled={locked}
+                    onClick={() => {
+                      if (locked) return;
+                      const first = item.lines[0];
+                      navigate(`/openings/${item.id}?line=${first.id}&mode=${mode}`);
+                    }}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs ${
+                      active
+                        ? 'bg-[var(--accent)] text-white'
+                        : locked
+                          ? 'border border-[var(--chat-border)] text-[var(--muted-foreground)] opacity-50'
+                          : 'border border-[var(--chat-border)] hover:bg-[var(--hover-bg)]'
+                    }`}
+                  >
+                    {item.name}
+                    {status === 'done' ? ' ✓' : ''}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              disabled={!neighbors.next || !isOpeningUnlocked(neighbors.next)}
+              title={
+                neighbors.next && !isOpeningUnlocked(neighbors.next)
+                  ? unlockHint(neighbors.next)
+                  : 'Следующий урок'
+              }
+              onClick={() => {
+                if (!neighbors.next || !isOpeningUnlocked(neighbors.next)) return;
+                const nextOpening = getOpening(neighbors.next);
+                const first = nextOpening?.lines[0];
+                if (nextOpening && first) {
+                  navigate(`/openings/${nextOpening.id}?line=${first.id}&mode=${mode}`);
+                }
+              }}
+              className="shrink-0 rounded-md border border-[var(--chat-border)] px-2 py-1 text-xs disabled:opacity-40"
+            >
+              Урок →
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <span className={`text-sm font-medium ${done ? 'text-yellow-500' : ''}`}>{status}</span>

@@ -51,6 +51,22 @@ export type Opening = {
   anti: OpeningLine[];
 };
 
+export type CurriculumTrack = {
+  id: string;
+  name: string;
+  description: string;
+  openingIds: string[];
+};
+
+export type CurriculumLevel = {
+  id: string;
+  name: string;
+  description: string;
+  tracks: CurriculumTrack[];
+};
+
+export type LessonStatus = 'locked' | 'open' | 'done';
+
 export type MoveMark = {
   san: string;
   from: string;

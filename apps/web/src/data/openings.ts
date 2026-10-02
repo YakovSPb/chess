@@ -1,5 +1,6 @@
 import type { Opening, OpeningLine, OpponentMove, Side, UserMove } from '../types';
 import { antiCaro, antiFegatello, antiItalian, antiLondon, antiQueens } from './anti';
+import { EXTRA_OPENINGS } from './extraOpenings';
 
 function user(
   san: string,
@@ -1299,6 +1300,7 @@ export const OPENINGS: Opening[] = [
     lines: [qgd, slav, vsLondon],
     anti: antiQueens,
   },
+  ...EXTRA_OPENINGS,
 ];
 
 export function getOpening(id: string | undefined): Opening | undefined {
