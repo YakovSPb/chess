@@ -6,6 +6,7 @@ import {
   isLevelUnlocked,
   lessonStatus,
   levelProgress,
+  openingAntiPassedCount,
   openingPassedCount,
   trackProgress,
   unlockHint,
@@ -42,8 +43,8 @@ export function HomePage() {
           <div>
             <h1 className="text-2xl font-semibold">Школа дебютов</h1>
             <p className="mt-1 max-w-xl text-sm text-[var(--muted-foreground)]">
-              Уровни по порядку. Новый урок открывается только после сдачи предыдущего в режиме
-              «Проверка».
+              Семейные блоки: сначала все варианты и фишки одного дебюта (за тебя и против тебя),
+              потом следующий дебют. Сдача — только в «Проверке» без ошибок.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
@@ -163,6 +164,7 @@ function LessonCard({
   status: LessonStatus;
 }) {
   const passed = openingPassedCount(opening.id);
+  const antiPassed = openingAntiPassedCount(opening.id);
   const first = opening.lines[0];
   const anti = opening.anti[0];
   const locked = status === 'locked';
@@ -187,6 +189,12 @@ function LessonCard({
       <p className="mt-2 line-clamp-3 text-sm text-[var(--muted-foreground)]">{opening.description}</p>
       <p className="mt-2 text-xs text-[var(--muted-foreground)]">
         Линии: {passed.done}/{passed.total}
+        {antiPassed.total > 0
+          ? ` (за тебя ${passed.done - antiPassed.done}/${passed.total - antiPassed.total}, против ${antiPassed.done}/${antiPassed.total})`
+          : ''}
+        {!done && !locked && passed.done < passed.total
+          ? ' — сдайте все линии, чтобы открыть следующий шаг блока'
+          : null}
         {!locked && first ? (
           <>
             {' · '}

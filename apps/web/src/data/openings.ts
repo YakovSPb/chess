@@ -1,6 +1,7 @@
 import type { Opening, OpeningLine, OpponentMove, Side, UserMove } from '../types';
 import { antiCaro, antiFegatello, antiItalian, antiLondon, antiQueens } from './anti';
 import { EXTRA_OPENINGS } from './extraOpenings';
+import { FAMILY_STEP_OPENINGS } from './familySteps';
 import { GM_OPENINGS } from './gmOpenings';
 
 function user(
@@ -1303,6 +1304,7 @@ export const OPENINGS: Opening[] = [
   },
   ...EXTRA_OPENINGS,
   ...GM_OPENINGS,
+  ...FAMILY_STEP_OPENINGS,
 ];
 
 export function getOpening(id: string | undefined): Opening | undefined {

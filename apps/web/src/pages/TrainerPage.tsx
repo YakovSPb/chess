@@ -6,8 +6,12 @@ import { getOpening, studentSide } from '../data/openings';
 import { neighborLessons, trackOf } from '../data/curriculum';
 import { arrowsForIdeas, coversOf } from '../lib/commentArrows';
 import {
+  isLinePassed,
   isOpeningUnlocked,
   lessonStatus,
+  nextUnpassedLine,
+  openingPassedCount,
+  isOpeningCompleted,
   rememberLesson,
   unlockHint,
 } from '../lib/curriculumProgress';
@@ -218,13 +222,40 @@ function LineSession({
       if (saved.current) return;
       saved.current = true;
       const mistakes = errorsRef.current;
-      recordAttempt(line.id, mistakes === 0);
+      // В школу засчитывается только чистая «Проверка».
+      if (mode === 'quiz') {
+        recordAttempt(line.id, mistakes === 0);
+      }
       setDone(true);
       setAwaitingUser(false);
+
+      let schoolNote = '';
+      if (mode === 'learn') {
+        schoolNote =
+          'Это режим «Учить». В школу засчитывается только «Проверка» без ошибок — и линии «за тебя», и «против тебя».';
+      } else if (mistakes === 0) {
+        const progress = openingPassedCount(opening.id);
+        if (isOpeningCompleted(opening.id)) {
+          const nextId = neighbors.next;
+          schoolNote = nextId
+            ? `Урок сдан целиком (${progress.done}/${progress.total}). Дальше в этом блоке: следующий шаг семьи, не новый дебют сразу.`
+            : `Урок сдан (${progress.done}/${progress.total}). Блок можно закрывать, если сданы все уроки блока.`;
+        } else {
+          const leftMain = opening.lines.filter((item) => !isLinePassed(item.id)).length;
+          const leftAnti = opening.anti.filter((item) => !isLinePassed(item.id)).length;
+          schoolNote = `Урок: ${progress.done}/${progress.total}. Осталось «за тебя»: ${leftMain}, «против тебя»: ${leftAnti}. Следующий шаг блока откроется после всех линий.`;
+        }
+      } else {
+        schoolNote = `Ошибок: ${mistakes}. Линия не засчитана — пройди её в «Проверке» чисто.`;
+      }
+
       const tail =
-        mistakes === 0
-          ? 'Чисто. Линия уйдёт на повторение по интервалу: 1 день, потом 3, 7, 16 и 35.'
-          : `Ошибок: ${mistakes}. Завтра эта линия вернётся сама — ошибка сбрасывает интервал.`;
+        mistakes === 0 && mode === 'quiz'
+          ? 'Чисто. Линия уйдёт на повторение: 1 день, потом 3, 7, 16 и 35.'
+          : mistakes === 0
+            ? 'Линия пройдена в режиме обучения.'
+            : `Ошибок: ${mistakes}. При чистой проверке интервал не сбросится.`;
+
       const fen = positionAt(line.moves, total);
       const color = side === 'white' ? 'w' : 'b';
       const ideas = arrowsForIdeas(fen, line.next, color);
@@ -236,7 +267,7 @@ function LineSession({
         {
           id: nextMessageId(),
           role: 'bot',
-          text: `Линия пройдена. ${line.summary}\n\n${tail}`,
+          text: `Линия пройдена. ${line.summary}\n\n${tail}\n\n${schoolNote}`,
           board: commentBoard(line.moves, total),
           ideas,
         },
@@ -277,7 +308,7 @@ function LineSession({
         board: commentBoard(line.moves, ply, mode === 'learn' ? move.san : undefined),
       },
     ]);
-  }, [done, line, mode, side, ply, total]);
+  }, [done, line, mode, side, ply, total, against, opening.id, neighbors.next]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -407,6 +438,12 @@ function LineSession({
 
   const lineIndex = lines.findIndex((item) => item.id === line.id);
   const nextLine = lines[lineIndex + 1];
+  const hasNext =
+    Boolean(nextLine) ||
+    (done &&
+      (Boolean(nextUnpassedLine(opening.id)) ||
+        (isOpeningCompleted(opening.id) &&
+          Boolean(neighbors.next && isOpeningUnlocked(neighbors.next)))));
   const live = viewPly === ply;
   const progress = Math.round((Math.min(ply, total) / total) * 100);
 
@@ -566,14 +603,30 @@ function LineSession({
             messages={messages}
             lines={lines}
             activeLineId={line.id}
-            hasNext={Boolean(nextLine)}
+            hasNext={hasNext}
             onLine={onLine}
             onRestart={onRestart}
             onPreview={showPreview}
             onPreviewEnd={hidePreviewSoon}
             onNext={() => {
-              if (nextLine) onLine(nextLine.id);
-              else navigate('/');
+              if (nextLine) {
+                onLine(nextLine.id);
+                return;
+              }
+              const unfinished = nextUnpassedLine(opening.id);
+              if (unfinished) {
+                onLine(unfinished);
+                return;
+              }
+              if (neighbors.next && isOpeningUnlocked(neighbors.next)) {
+                const nextOpening = getOpening(neighbors.next);
+                const first = nextOpening?.lines[0];
+                if (nextOpening && first) {
+                  navigate(`/openings/${nextOpening.id}?line=${first.id}&mode=${mode}`);
+                  return;
+                }
+              }
+              navigate('/');
             }}
           />
         </aside>

@@ -20,9 +20,9 @@ docs/       Как устроен продукт
 
 ## Данные
 
-Дебюты: `apps/web/src/data/openings.ts` + `extraOpenings.ts` + `gmOpenings.ts` (лестница до ГМ). Anti-линии — в `anti.ts` и внутри пакетов.
+Дебюты: `apps/web/src/data/openings.ts` + `extraOpenings.ts` + `gmOpenings.ts` + `familySteps.ts` (промежуточные шаги семей). Anti-линии — в `anti.ts` и внутри пакетов.
 
-Программа школы: `apps/web/src/data/curriculum.ts` — **15 уровней**, порядок `openingId` внутри треков.
+Программа школы: `apps/web/src/data/curriculum.ts` — **15 семейных блоков** (внутри каждого база → схемы → фишки). Урок сдан только после всех линий «за тебя» и «против тебя».
 
 Прогресс школы: `apps/web/src/lib/curriculumProgress.ts` читает SRS (`opening-srs-v1`, `step >= 1` = линия сдана) и пишет `opening-curriculum-v1` (последний урок).
 

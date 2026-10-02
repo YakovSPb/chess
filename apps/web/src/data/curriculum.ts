@@ -1,202 +1,204 @@
 import type { CurriculumLevel } from '../types';
 
 /**
- * Школьная лестница до гроссмейстерского репертуара.
- * Уроки открываются строго по порядку: предыдущий дебют сдан (все линии SRS step≥1).
+ * Каждый блок — одна семья дебюта.
+ * Внутри: база → схемы → фишки/жертвы (3–4 шага).
+ * Урок сдан = все линии «за тебя» и «против тебя» в Проверке (SRS step ≥ 1).
+ * Новый блок открывается только после закрытия предыдущего.
  */
 export const CURRICULUM: CurriculumLevel[] = [
   {
-    id: 'level-01-italian',
-    name: '1 · Новичок · Итальянская',
-    description: '1.e4 e5. Спокойный центр, двухконей и первая острая атака на f7.',
+    id: 'block-italian',
+    name: 'Блок 1 · Итальянская семья',
+    description: 'База → двухконей → жертва на f7 → гамбит Эванса.',
     tracks: [
       {
         id: 'track-italian',
-        name: 'Итальянская семья',
-        description: 'От спокойной итальянской к двухконям и жареной печени.',
-        openingIds: ['italian', 'two-knights', 'fegatello'],
+        name: 'Путь по итальянской',
+        description: 'Спокойная игра, схемы, жертва, гамбит.',
+        openingIds: ['italian', 'two-knights', 'fegatello', 'evans'],
       },
     ],
   },
   {
-    id: 'level-02-open-neighbors',
-    name: '2 · Новичок+ · Соседи e4 e5',
-    description: 'Шотландская, испанская и четырёх коней — соседние открытые схемы.',
+    id: 'block-scotch',
+    name: 'Блок 2 · Шотландская семья',
+    description: 'Четырёх коней → шотландская → шотландский гамбит.',
     tracks: [
       {
-        id: 'track-open-neighbors',
-        name: 'Другие открытые',
-        description: 'После итальянской — соседние 1.e4 e5 без лавины теории.',
-        openingIds: ['scotch', 'spanish', 'four-knights'],
+        id: 'track-scotch',
+        name: 'Путь по шотландской',
+        description: 'Спокойные кони, удар d4, гамбитная фишка.',
+        openingIds: ['four-knights', 'scotch', 'scotch-gambit'],
       },
     ],
   },
   {
-    id: 'level-03-open-tactics',
-    name: '3 · Тактика открытых',
-    description: 'Гамбиты и русская партия: темп, жертва, симметрия.',
+    id: 'block-spanish',
+    name: 'Блок 3 · Испанская семья',
+    description: 'База → открытая → Маршалл → Берлин.',
     tracks: [
       {
-        id: 'track-open-tactics',
-        name: 'Острые и крепкие',
-        description: 'Эванс и королевский гамбит за белых, русская за чёрных.',
-        openingIds: ['evans', 'kings-gambit', 'petrov'],
+        id: 'track-spanish',
+        name: 'Путь по испанской',
+        description: 'Давление, открытый центр, жертва, крепость.',
+        openingIds: ['spanish', 'spanish-open', 'marshall', 'berlin'],
       },
     ],
   },
   {
-    id: 'level-04-white-systems',
-    name: '4 · Системы белых',
-    description: 'Одна схема на разные ответы: лондон, Колле, Йобава.',
+    id: 'block-open-sharp',
+    name: 'Блок 4 · Острые на e4 e5',
+    description: 'Венская → русская → королевский гамбит.',
+    tracks: [
+      {
+        id: 'track-open-sharp',
+        name: 'От спокойного к острому',
+        description: 'Сначала Nc3, потом симметрия, потом f4.',
+        openingIds: ['vienna', 'petrov', 'kings-gambit'],
+      },
+    ],
+  },
+  {
+    id: 'block-d4-systems',
+    name: 'Блок 5 · Системы на d4',
+    description: 'Лондон → Колле → Йобава.',
     tracks: [
       {
         id: 'track-d4-systems',
-        name: 'd4-системы',
-        description: 'Мало ветвей — много понимания планов.',
+        name: 'Путь систем',
+        description: 'От надёжного лондона к острой Йобаве.',
         openingIds: ['london', 'colle', 'jobava'],
       },
     ],
   },
   {
-    id: 'level-05-vs-e4-solid',
-    name: '5 · Крепость на 1.e4',
-    description: 'Каро-Канн, французская и разбор скандинавской за белых.',
+    id: 'block-caro',
+    name: 'Блок 6 · Каро и ранний …d5',
+    description: 'Каро-Канн → Панов → скандинавская.',
     tracks: [
       {
-        id: 'track-vs-e4-solid',
-        name: 'Полуоткрытые крепкие',
-        description: 'Без сицилианской лавины — сначала стена.',
-        openingIds: ['caro', 'french', 'scandinavian'],
+        id: 'track-caro',
+        name: 'Путь Каро',
+        description: 'Крепость, атака Панова, соседняя …d5.',
+        openingIds: ['caro', 'caro-panov', 'scandinavian'],
       },
     ],
   },
   {
-    id: 'level-06-vs-d4-classic',
-    name: '6 · Классика на 1.d4',
-    description: 'd5: отказанный/славянская и принятый ферзевый гамбит.',
+    id: 'block-french',
+    name: 'Блок 7 · Французская семья',
+    description: 'База → Винавер → Тарраш.',
     tracks: [
       {
-        id: 'track-vs-d4-classic',
-        name: 'Ферзевые структуры',
-        description: 'Центр пешками, понятные планы.',
-        openingIds: ['queens', 'qga'],
+        id: 'track-french',
+        name: 'Путь французской',
+        description: 'Закрытый центр, связка Bb4, ответ на Nd2.',
+        openingIds: ['french', 'french-winawer', 'french-tarrasch'],
       },
     ],
   },
   {
-    id: 'level-07-indian',
-    name: '7 · Индийские защиты',
-    description: 'Нимцович и новоиндийская — борьба за e4 без раннего …d5.',
+    id: 'block-queens',
+    name: 'Блок 8 · Ферзевый гамбит',
+    description: 'Отказ/славянская → принятый → полуславянская.',
+    tracks: [
+      {
+        id: 'track-queens',
+        name: 'Путь ферзевых',
+        description: 'Классика d5, потом острые структуры.',
+        openingIds: ['queens', 'qga', 'semi-slav'],
+      },
+    ],
+  },
+  {
+    id: 'block-indian',
+    name: 'Блок 9 · Индийские защиты',
+    description: 'Нимцович → Бого → новоиндийская.',
     tracks: [
       {
         id: 'track-indian',
-        name: 'Индийские',
-        description: 'Связка Bb4 и фианкетто ферзевого слона.',
-        openingIds: ['nimzo', 'queens-indian'],
+        name: 'Путь индийских',
+        description: 'Связка на c3, шах Bb4+, фианкетто b7.',
+        openingIds: ['nimzo', 'bogo-indian', 'queens-indian'],
       },
     ],
   },
   {
-    id: 'level-08-hypermodern',
-    name: '8 · Гипермодерн',
-    description: 'Староиндийская и Грюнфельд — уступи центр, бей фигурами.',
+    id: 'block-hypermodern',
+    name: 'Блок 10 · Гипермодерн на d4',
+    description: 'Староиндийская → Грюнфельд → Бенони.',
     tracks: [
       {
         id: 'track-hypermodern',
-        name: 'КИД и Грюнфельд',
-        description: 'Классика гроссмейстерского ответа на 1.d4.',
-        openingIds: ['kid', 'grunfeld'],
+        name: 'Путь гипермодерна',
+        description: 'Уступи центр, бей …e5/…c5/…d5.',
+        openingIds: ['kid', 'grunfeld', 'benoni'],
       },
     ],
   },
   {
-    id: 'level-09-sicilian-base',
-    name: '9 · Сицилианка · база',
-    description: '…c5 за чёрных и спокойный Алапин за белых.',
+    id: 'block-sicilian',
+    name: 'Блок 11 · Сицилианская семья',
+    description: 'База за чёрных → Алапин → дракон.',
     tracks: [
       {
-        id: 'track-sicilian-base',
-        name: 'Сицилианская база',
-        description: 'Сначала схевенинген/надорф-lite и антисицилианка c3.',
-        openingIds: ['sicilian-black', 'alapin'],
+        id: 'track-sicilian',
+        name: 'Путь сицилианки',
+        description: 'Асимметрия, анти-схема, острый дракон.',
+        openingIds: ['sicilian-black', 'alapin', 'dragon'],
       },
     ],
   },
   {
-    id: 'level-10-sicilian-sharp',
-    name: '10 · Сицилианка · острая',
-    description: 'Дракон и югославская атака — гонка флангов.',
-    tracks: [
-      {
-        id: 'track-sicilian-sharp',
-        name: 'Дракон',
-        description: 'Острый миттельшпиль из дебюта.',
-        openingIds: ['dragon'],
-      },
-    ],
-  },
-  {
-    id: 'level-11-flank',
-    name: '11 · Фланговые начала',
-    description: 'Английское, Рети и голландская — игра вне 1.e4/1.d4 шаблона.',
+    id: 'block-flank',
+    name: 'Блок 12 · Фланговые начала',
+    description: 'Английское → Рети → голландская.',
     tracks: [
       {
         id: 'track-flank',
-        name: 'Фланги',
-        description: 'Гипермодерн за белых и острый …f5 за чёрных.',
+        name: 'Путь флангов',
+        description: 'c4, Nf3/c4, затем …f5.',
         openingIds: ['english', 'reti', 'dutch'],
       },
     ],
   },
   {
-    id: 'level-12-spanish-deep',
-    name: '12 · Испанская глубоко',
-    description: 'Берлин — эндшпильный уклон и антиберлин за белых.',
-    tracks: [
-      {
-        id: 'track-spanish-deep',
-        name: 'Берлин',
-        description: 'От открытой испанской к гроссмейстерской крепости.',
-        openingIds: ['berlin'],
-      },
-    ],
-  },
-  {
-    id: 'level-13-modern-white',
-    name: '13 · Современные белые',
-    description: 'Каталон и Тромповский — давление без ранней тактики.',
+    id: 'block-modern-white',
+    name: 'Блок 13 · Современные белые',
+    description: 'Торре → каталон → Тромповский.',
     tracks: [
       {
         id: 'track-modern-white',
-        name: 'Каталон и Тромп',
-        description: 'Репертуар 1.d4 для сильного любителя и выше.',
-        openingIds: ['catalan', 'trompowsky'],
+        name: 'Путь систем 1.d4',
+        description: 'Связка Bg5, фианкетто g2, ранний Bg5 на …Nf6.',
+        openingIds: ['torre', 'catalan', 'trompowsky'],
       },
     ],
   },
   {
-    id: 'level-14-vs-e4-flex',
-    name: '14 · Гибкий ответ на e4',
-    description: 'Пирц, современная и Алехин — уступи центр осознанно.',
+    id: 'block-flex-e4',
+    name: 'Блок 14 · Гибкий ответ на e4',
+    description: 'Пирц → современная → Алехин.',
     tracks: [
       {
-        id: 'track-vs-e4-flex',
-        name: 'Полуоткрытые гибкие',
-        description: 'Асимметрия без сицилианской энциклопедии.',
+        id: 'track-flex-e4',
+        name: 'Путь гибких',
+        description: 'Уступи центр, бей позже.',
         openingIds: ['pirc', 'modern', 'alekhine'],
       },
     ],
   },
   {
-    id: 'level-15-gm',
-    name: '15 · Гроссмейстер',
-    description: 'Полуславянская и Бенони — острые структуры топ-уровня.',
+    id: 'block-gm',
+    name: 'Блок 15 · Гроссмейстерские фишки',
+    description: 'Английская атака → Ботвинник → гамбит Морра.',
     tracks: [
       {
         id: 'track-gm',
-        name: 'GM-структуры',
-        description: 'Последняя ступень школьной лестницы.',
-        openingIds: ['semi-slav', 'benoni'],
+        name: 'Острые GM-схемы',
+        description: 'Сицилианские атаки белых и система Ботвинника.',
+        openingIds: ['english-attack', 'botvinnik', 'smith-morra'],
       },
     ],
   },

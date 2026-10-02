@@ -38,12 +38,41 @@ export function isLinePassed(lineId: string): boolean {
   return Boolean(entry && entry.step >= 1);
 }
 
+/** Урок сдан: все линии «за тебя» и «против тебя». */
 export function isOpeningCompleted(openingId: string): boolean {
   const opening = getOpening(openingId);
   if (!opening) return false;
   const all = [...opening.lines, ...opening.anti];
   if (all.length === 0) return false;
   return all.every((line) => isLinePassed(line.id));
+}
+
+export function openingPassedCount(openingId: string): { done: number; total: number } {
+  const opening = getOpening(openingId);
+  if (!opening) return { done: 0, total: 0 };
+  const all = [...opening.lines, ...opening.anti];
+  const done = all.filter((line) => isLinePassed(line.id)).length;
+  return { done, total: all.length };
+}
+
+export function openingAntiPassedCount(openingId: string): { done: number; total: number } {
+  const opening = getOpening(openingId);
+  if (!opening) return { done: 0, total: 0 };
+  const done = opening.anti.filter((line) => isLinePassed(line.id)).length;
+  return { done, total: opening.anti.length };
+}
+
+/** Следующая несданная линия: сначала «за тебя», потом «против тебя». */
+export function nextUnpassedLine(openingId: string): string | null {
+  const opening = getOpening(openingId);
+  if (!opening) return null;
+  for (const line of opening.lines) {
+    if (!isLinePassed(line.id)) return line.id;
+  }
+  for (const line of opening.anti) {
+    if (!isLinePassed(line.id)) return line.id;
+  }
+  return null;
 }
 
 export function isTrackCompleted(track: CurriculumTrack): boolean {
@@ -123,7 +152,8 @@ export function unlockHint(openingId: string): string {
   if (place.indexInTrack > 0) {
     const prevId = track.openingIds[place.indexInTrack - 1];
     const prevOpening = getOpening(prevId);
-    return `Сначала сдай урок «${prevOpening?.name ?? prevId}» (все линии в режиме «Проверка»).`;
+    const progress = openingPassedCount(prevId);
+    return `Сначала сдай урок «${prevOpening?.name ?? prevId}»: все линии «за тебя» и «против тебя» в «Проверке» без ошибок (сейчас ${progress.done}/${progress.total}).`;
   }
 
   return 'Урок пока закрыт.';
@@ -174,12 +204,4 @@ export function currentLesson(): { opening: Opening; level: CurriculumLevel; tra
   }
 
   return null;
-}
-
-export function openingPassedCount(openingId: string): { done: number; total: number } {
-  const opening = getOpening(openingId);
-  if (!opening) return { done: 0, total: 0 };
-  const all = [...opening.lines, ...opening.anti];
-  const done = all.filter((line) => isLinePassed(line.id)).length;
-  return { done, total: all.length };
 }
