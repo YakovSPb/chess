@@ -19,7 +19,6 @@ import { commentBoard, expectedSquares, positionAt, scoreOf, squaresOfPly, tryUs
 import {
   PASS_STREAK,
   lineMastery,
-  masteryColorClass,
   masteryLabel,
   masteryProgressNote,
   masteryTextClass,
