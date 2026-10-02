@@ -68,7 +68,7 @@ export function HomePage() {
           <section className="rounded-xl border border-[var(--accent)]/40 bg-[var(--card-bg)] p-4">
             <p className="text-xs font-medium tracking-wide text-[var(--accent)] uppercase">Сейчас</p>
             <h2 className="mt-1 text-lg font-semibold">
-              {current.level.name.replace(/^Уровень \d+ · /, '')} · {current.opening.name}
+              {current.level.name} · {current.opening.name}
             </h2>
             <p className="mt-1 text-sm text-[var(--muted-foreground)]">
               Трек «{current.track.name}». {current.opening.description}
