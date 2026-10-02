@@ -10,8 +10,13 @@ function opponent(san: string, say: string): OpponentMove {
 }
 
 function U(san: string, idea?: string): UserMove {
-  const text = idea ?? `Играем ${san}.`;
-  return user(san, text, `Сделай ход ${san}.`, `${text} Это ход линии школы.`, 'Держись схемы урока.');
+  return user(
+    san,
+    idea ? `${idea} Ход: ${san}.` : `Играем ${san}.`,
+    idea ?? 'Сделай ход по идее линии — без подсказки нотации.',
+    idea ?? `В этой линии нужен ход схемы.`,
+    'Держись схемы урока.',
+  );
 }
 
 function O(san: string, idea?: string): OpponentMove {

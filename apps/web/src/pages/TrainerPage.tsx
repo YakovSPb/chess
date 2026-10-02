@@ -28,6 +28,26 @@ const GOLD: CSSProperties = {
   backgroundImage: 'linear-gradient(45deg, rgba(255, 215, 0, 0.6), rgba(255, 215, 0, 0.3))',
 };
 
+/** В проверке не называем ход: убираем SAN из текста подсказки. */
+function quizPromptText(san: string, hint: string, why: string): string {
+  const variants = [san, san.replace(/[+#]/g, ''), san.replace(/^=/, '')].filter(Boolean);
+  let text = hint;
+  for (const token of variants) {
+    text = text.replaceAll(token, '…');
+  }
+  text = text.replace(/\s{2,}/g, ' ').replace(/\s+([.,!?])/g, '$1').trim();
+  const hollow = !text || /^сделай ход/i.test(hint) || text.replace(/[….!\s—–-]/g, '').length < 6;
+  if (!hollow) return text;
+
+  let idea = why;
+  for (const token of variants) {
+    idea = idea.replaceAll(token, '…');
+  }
+  idea = idea.replace(/\s{2,}/g, ' ').trim();
+  if (idea && idea.replace(/[….!\s—–-]/g, '').length >= 6) return idea;
+  return 'Сделай ход по схеме этой линии.';
+}
+
 export function TrainerPage() {
   const { openingId } = useParams();
   const opening = getOpening(openingId);
@@ -252,8 +272,9 @@ function LineSession({
       {
         id: nextMessageId(),
         role: 'bot',
-        text: mode === 'learn' ? move.say : move.hint,
-        board: commentBoard(line.moves, ply, move.san),
+        text: mode === 'learn' ? move.say : quizPromptText(move.san, move.hint, move.why),
+        // В проверке не рисуем стрелку правильного хода до ответа ученика.
+        board: commentBoard(line.moves, ply, mode === 'learn' ? move.san : undefined),
       },
     ]);
   }, [done, line, mode, side, ply, total]);
@@ -321,24 +342,31 @@ function LineSession({
         {
           id: nextMessageId(),
           role: 'bot',
-          text: `${played.san} — допустимо. ${alternative.why}\n\nВ этой линии играем ${expected.san}.`,
-          board: commentBoard(line.moves, ply, expected.san),
+          text:
+            mode === 'learn'
+              ? `${played.san} — допустимо. ${alternative.why}\n\nВ этой линии играем ${expected.san}.`
+              : `${played.san} — допустимо. ${alternative.why}\n\nВ этой линии нужен другой ход схемы.`,
+          board: commentBoard(line.moves, ply, mode === 'learn' ? expected.san : undefined),
         },
       ]);
       return false;
     }
 
-    const hint = expectedSquares(positionAt(line.moves, ply), expected.san);
-    if (hint) setMiss(hint);
+    const hintSquares = expectedSquares(positionAt(line.moves, ply), expected.san);
+    if (hintSquares) setMiss(hintSquares);
     setErrors((count) => count + 1);
-    const prompt = mode === 'learn' ? expected.say : expected.hint;
+    const prompt =
+      mode === 'learn' ? expected.say : quizPromptText(expected.san, expected.hint, expected.why);
     setMessages((prev) => [
       ...prev,
       {
         id: nextMessageId(),
         role: 'bot',
-        text: `${prompt}\n\n❌ Неправильно! Ожидался ход: ${expected.san}`,
-        board: commentBoard(line.moves, ply, expected.san),
+        text:
+          mode === 'learn'
+            ? `${prompt}\n\n❌ Неправильно! Ожидался ход: ${expected.san}`
+            : `${prompt}\n\n❌ Неправильно. Попробуй ещё раз.`,
+        board: commentBoard(line.moves, ply, mode === 'learn' ? expected.san : undefined),
       },
     ]);
     return false;
