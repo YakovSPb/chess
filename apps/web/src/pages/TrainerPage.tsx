@@ -19,9 +19,9 @@ import { commentBoard, expectedSquares, positionAt, scoreOf, squaresOfPly, tryUs
 import {
   PASS_STREAK,
   lineMastery,
+  masteryColorClass,
   masteryLabel,
   masteryProgressNote,
-  masteryTextClass,
   recordAttempt,
 } from '../lib/srs';
 import type { BoardArrow, ChatMessage, Opening, OpeningLine, Side, TrainMode } from '../types';
@@ -479,14 +479,9 @@ function LineSession({
             </Link>
             <div className="min-w-0">
               <h1 className="truncate text-lg font-semibold">{opening.name}</h1>
-              <p className="truncate text-sm text-[var(--muted-foreground)]">
-                {against ? 'Против тебя · ' : ''}
-                {line.name}
-                {' · '}
-                <span className={masteryTextClass(lineMastery(line.id))}>
-                  {masteryLabel(lineMastery(line.id))}
-                </span>
-              </p>
+              {against ? (
+                <p className="truncate text-xs text-[var(--muted-foreground)]">Против тебя</p>
+              ) : null}
             </div>
           </div>
           <div className="flex shrink-0 rounded-md border border-[var(--chat-border)]">
@@ -497,6 +492,35 @@ function LineSession({
               Проверка
             </ModeButton>
           </div>
+        </div>
+        <div className="mb-3 flex gap-1.5 overflow-x-auto pb-0.5" role="tablist" aria-label="Линии урока">
+          {lines.map((item) => {
+            const active = item.id === line.id;
+            const mastery = lineMastery(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                title={`${item.name}: ${masteryLabel(mastery)}`}
+                onClick={() => onLine(item.id)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                  active
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'border border-[var(--chat-border)] text-[var(--foreground)] hover:bg-[var(--hover-bg)]'
+                }`}
+              >
+                <span
+                  className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${
+                    active && mastery === 0 ? 'bg-white/70' : masteryColorClass(mastery)
+                  }`}
+                  aria-hidden
+                />
+                <span className="max-w-[12rem] truncate">{item.name}</span>
+              </button>
+            );
+          })}
         </div>
         {trackCtx && (
           <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1">
