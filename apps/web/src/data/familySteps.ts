@@ -72,10 +72,21 @@ function finalizeLine(line: OpeningLine, side: Side): OpeningLine {
       }
     }
     if (!played) {
+      try {
+        played = chess.move(`${move.san.replace(/[+#]/g, '')}#`);
+      } catch {
+        played = null;
+      }
+    }
+    if (!played) {
       throw new Error(`${line.id} #${index}: нелегальный ${move.san} из ${chess.fen()}`);
     }
     return { ...move, san: played.san };
   });
+
+  if (chess.isCheckmate() || line.next.length === 0) {
+    return { ...line, moves, next: [] };
+  }
 
   const color = side === 'white' ? 'w' : 'b';
   const parts = chess.fen().split(' ');
@@ -84,6 +95,9 @@ function finalizeLine(line: OpeningLine, side: Side): OpeningLine {
   const probe = new Chess();
   probe.load(parts.join(' '));
   const legal = probe.moves();
+  if (legal.length === 0) {
+    return { ...line, moves, next: [] };
+  }
   const quiet = legal.filter((san) => !san.includes('x') && !san.includes('='));
   const pool = quiet.length >= 2 ? quiet : legal;
   return {
@@ -114,11 +128,23 @@ const RAW: Opening[] = [
     'white',
     '1.e4 e5 2.Nf3 Nc6 3.d4 exd4 4.Bc4',
     [
-      makeLine('scotch-gambit-main', 'Принятый', 'Отдай пешку за развитие: Bc4, c3, O-O.', 'Фигуры выведены, центр под давлением.', [
-        U('e4'), O('e5'), U('Nf3'), O('Nc6'), U('d4'), O('exd4'),
-        U('Bc4', 'Гамбит: слон раньше взятия на d4.'), O('Bc5'),
-        U('c3'), O('dxc3'), U('Bxf7+', 'Типичная фишка — удар на f7.'), O('Kxf7'), U('Qd5+'),
-      ]),
+      makeLine(
+        'scotch-gambit-main',
+        'Принятый',
+        'Отдай пешку за развитие: Bc4, c3, удар на f7. Линию не обрываем на шахе — забираем слона обратно.',
+        'Слон с c5 снят ферзём. Жертва на f7 окупилась материалом и королём в центре.',
+        [
+          U('e4'), O('e5'), U('Nf3'), O('Nc6'), U('d4'), O('exd4'),
+          U('Bc4', 'Гамбит: слон раньше взятия на d4.'), O('Bc5'),
+          U('c3'), O('dxc3'),
+          U('Bxf7+', 'Типичная фишка — удар на f7.'), O('Kxf7'),
+          U('Qd5+', 'Шах ферзём: король уходит, слон c5 без защиты.'),
+          O('Ke8'),
+          U('Qxc5', 'Забираем слона. Не останавливаемся на Qd5+: смысл удара — вернуть фигуру.'),
+          O('d6'),
+          U('Qxc3', 'Снимаем последнюю лишнюю пешку. Материал и развитие за белых.'),
+        ],
+      ),
       makeLine('scotch-gambit-nf6', 'На …Nf6', 'Если чёрные развивают коня — держи темп и центр.', 'Развитие с инициативой.', [
         U('e4'), O('e5'), U('Nf3'), O('Nc6'), U('d4'), O('exd4'),
         U('Bc4'), O('Nf6'), U('e5'), O('d5'), U('Bb5'), O('Ne4'), U('Nxd4'),

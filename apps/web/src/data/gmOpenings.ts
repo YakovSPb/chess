@@ -29,8 +29,8 @@ function makeLine(
   intro: string,
   summary: string,
   moves: OpeningLine['moves'],
-  nextBest: string,
-  nextAlt: string,
+  nextBest?: string,
+  nextAlt?: string,
   nextBestWhy = 'логический следующий ход схемы',
   nextAltWhy = 'запасной полезный ход',
 ): OpeningLine {
@@ -40,10 +40,13 @@ function makeLine(
     intro,
     summary,
     moves,
-    next: [
-      { san: nextBest, why: nextBestWhy, best: true },
-      { san: nextAlt, why: nextAltWhy },
-    ],
+    next:
+      nextBest && nextAlt
+        ? [
+            { san: nextBest, why: nextBestWhy, best: true },
+            { san: nextAlt, why: nextAltWhy },
+          ]
+        : [],
   };
 }
 
@@ -76,10 +79,22 @@ function finalizeLine(line: OpeningLine, side: Side): OpeningLine {
       }
     }
     if (!played) {
+      try {
+        played = chess.move(`${move.san.replace(/[+#]/g, '')}#`);
+      } catch {
+        played = null;
+      }
+    }
+    if (!played) {
       throw new Error(`${line.id} #${index}: нелегальный ${move.san} из ${chess.fen()}`);
     }
     return { ...move, san: played.san };
   });
+
+  // Линия до мата / без продолжений — не выдумываем «следующие» ходы.
+  if (chess.isCheckmate() || line.next.length === 0) {
+    return { ...line, moves, next: [] };
+  }
 
   const color = side === 'white' ? 'w' : 'b';
   const parts = chess.fen().split(' ');
@@ -92,6 +107,9 @@ function finalizeLine(line: OpeningLine, side: Side): OpeningLine {
     throw new Error(`${line.id}: не удалось подобрать продолжения`);
   }
   const legal = probe.moves();
+  if (legal.length === 0) {
+    return { ...line, moves, next: [] };
+  }
   const matchLegal = (san: string) =>
     legal.find((item) => item === san || item.replace('+', '') === san.replace('+', ''));
 
@@ -264,6 +282,44 @@ const RAW_GM_OPENINGS: Opening[] = [
         'Re1',
         'Конь на c3 развивает фигуру и смотрит на d5/e4 — готовим давление в центре.',
         'Ладья на e1 усиливает пешку e4 и смотрит в центр по открытой линии, когда позиция вскроется.',
+      ),
+      makeLine(
+        'evans-evergreen',
+        'Мат с жертвой ферзя',
+        'Вечнозелёная партия (Андерсен — Дюфрен): полный гамбит Эванса до мата. Не обрываем атаку на полдороге — доводим до Qxd7+ и мата слонами.',
+        'Мат: ферзь отдан на d7, слоны добивают короля на e7. Запомни финал целиком.',
+        [
+          U('e4'), O('e5'), U('Nf3'), O('Nc6'), U('Bc4'), O('Bc5'),
+          U('b4', 'Жертва пешки Эванса: темп и открытый центр.'), O('Bxb4'),
+          U('c3'), O('Ba5'), U('d4'), O('exd4'),
+          U('O-O', 'Король в укрытии — ладья уже смотрит в центр.'),
+          O('d3', 'Чёрные не берут на c3 и не играют d6 — оставляют клин на d3.'),
+          U('Qb3', 'Ферзь бьёт по b7 и f7 вместе со слоном c4.'), O('Qf6'),
+          U('e5', 'Гоним ферзя и вскрываем линии к королю.'), O('Qg6'),
+          U('Re1', 'Ладья на e-файл: готовим жертвы по линии e.'), O('Nge7'),
+          U('Ba3', 'Слон целится в связку по диагонали a3–f8.'), O('b5'),
+          U('Qxb5', 'Забираем пешку и держим давление.'), O('Rb8'),
+          U('Qa4', 'Ферзь уходит с темпом, слон a5 всё ещё под ударами идей.'), O('Bb6'),
+          U('Nbd2', 'Подключаем коня к центру и королевскому флангу.'), O('Bb7'),
+          U('Ne4', 'Конь прыгает в атаку: бьёт по f6 и смотрит на короля.'), O('Qf5'),
+          U('Bxd3', 'Снимаем клин d3 — слон входит в атаку.'), O('Qh5'),
+          U('Nf6+', 'Шах: вскрываем пешки королевского фланга.'), O('gxf6'),
+          U('exf6', 'Пешка на f6 — клин у короля, ладья e1 режет.'), O('Rg8'),
+          U('Rad1', 'Вторая ладья на d-файл: готовим удар по d7.'), O('Qxf3'),
+          U(
+            'Rxe7+',
+            'Жертва ладьи: снимаем защитника и открываем короля. Не останавливаемся — атака идёт до мата.',
+          ),
+          O('Nxe7'),
+          U(
+            'Qxd7+',
+            'Жертва ферзя! Король вынужден брать — иначе мат быстрее. После Kxd7 слоны добивают.',
+          ),
+          O('Kxd7'),
+          U('Bf5+', 'Шах слоном: короля гонят обратно в центр.'), O('Ke8'),
+          U('Bd7+', 'Ещё шах: король уходит на f8.'), O('Kf8'),
+          U('Bxe7#', 'Мат слоном на e7. Весь смысл линии — не обрывать атаку до этого хода.'),
+        ],
       ),
       makeLine(
         'evans-dxc3',
