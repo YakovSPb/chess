@@ -1000,4 +1000,6 @@ export const antiFegatello: OpeningLine[] = [vsFegatelloNa5, vsFegatelloD3];
 export const antiItalian: OpeningLine[] = [vsItalianQuiet, vsItalianD4, vsItalianNg5];
 export const antiLondon: OpeningLine[] = [vsLondonBd6, vsLondonH3];
 export const antiCaro: OpeningLine[] = [vsCaroC5, vsCaroQb6, vsCaroNg6];
-export const antiQueens: OpeningLine[] = [vsQueensE6, vsQueensC6];
+export const antiQueens: OpeningLine[] = [vsQueensE6];
+/** Против славянской (…c6 и …Bf5). Id линий сохранены для SRS. */
+export const antiSlav: OpeningLine[] = [vsQueensC6];

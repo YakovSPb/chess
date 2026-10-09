@@ -4,9 +4,9 @@ import { CurriculumBlocks } from '../components/CurriculumBlocks';
 import { CURRICULUM, SIDE_BLOCK_IDS } from '../data/curriculum';
 import { getOpening } from '../data/openings';
 import { currentLesson } from '../lib/curriculumProgress';
-import { PASS_STREAK, isDue } from '../lib/srs';
+import { isDue } from '../lib/srs';
 
-export function HomePage() {
+export function GambitsPage() {
   const dueCount = CURRICULUM.reduce((sum, level) => {
     return (
       sum +
@@ -26,20 +26,19 @@ export function HomePage() {
     );
   }, 0);
 
+  const levels = CURRICULUM.filter((level) => SIDE_BLOCK_IDS.has(level.id));
   const current = currentLesson();
-  const currentIsSchool = current && !SIDE_BLOCK_IDS.has(current.level.id);
-  const schoolLevels = CURRICULUM.filter((level) => !SIDE_BLOCK_IDS.has(level.id));
+  const currentIsGambit = current && SIDE_BLOCK_IDS.has(current.level.id);
 
   return (
     <div className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
       <header className="border-b border-[var(--chat-border)] bg-[var(--card-bg)]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-5">
           <div>
-            <h1 className="text-2xl font-semibold">Школа дебютов</h1>
+            <h1 className="text-2xl font-semibold">Гамбиты</h1>
             <p className="mt-1 max-w-xl text-sm text-[var(--muted-foreground)]">
-              Семейные блоки: сначала все варианты и фишки одного дебюта (за тебя и против тебя),
-              потом следующий дебют. Линия: {PASS_STREAK} чистые «Проверки» подряд —
-              оранжевый → жёлтый → зелёный; зелёный фиксируется.
+              Вне школы развития: жертвы пешек и учебные матовые атаки. Можно проходить в любой
+              момент.
             </p>
           </div>
           <AppNav dueCount={dueCount} />
@@ -47,7 +46,7 @@ export function HomePage() {
       </header>
 
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
-        {currentIsSchool && current && (
+        {currentIsGambit && current && (
           <section className="rounded-xl border border-[var(--accent)]/40 bg-[var(--card-bg)] p-4">
             <p className="text-xs font-medium tracking-wide text-[var(--accent)] uppercase">Сейчас</p>
             <h2 className="mt-1 text-lg font-semibold">
@@ -66,7 +65,7 @@ export function HomePage() {
           </section>
         )}
 
-        <CurriculumBlocks levels={schoolLevels} />
+        <CurriculumBlocks levels={levels} />
       </main>
     </div>
   );

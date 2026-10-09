@@ -1,5 +1,5 @@
 import type { Opening, OpeningLine, OpponentMove, Side, UserMove } from '../types';
-import { antiCaro, antiFegatello, antiItalian, antiLondon, antiQueens } from './anti';
+import { antiCaro, antiFegatello, antiItalian, antiLondon, antiQueens, antiSlav } from './anti';
 import { EXTRA_OPENINGS } from './extraOpenings';
 import { FAMILY_STEP_OPENINGS } from './familySteps';
 import { GM_OPENINGS } from './gmOpenings';
@@ -778,12 +778,12 @@ const qgd: OpeningLine = {
       'e6',
       'e6 защищает d5. Гамбит отказываем: пешку в центре оставляем себе.',
       'Защити d5 пешкой e.',
-      'dxc4 — принятый гамбит, пешку потом приходится возвращать. c6 — славянская, она в соседней линии. Здесь учим e6.',
+      'dxc4 — принятый гамбит, пешку потом приходится возвращать. c6 — славянская, она в следующем уроке. Здесь учим e6.',
       'На Nc3 выводи коня на f6.',
       [
         {
           san: 'c6',
-          why: 'c6 — славянская защита, тоже наш дебют, но другая линия. Здесь продолжаем e6.',
+          why: 'c6 — славянская защита, отдельный урок. Здесь продолжаем e6.',
         },
       ],
     ),
@@ -863,12 +863,12 @@ const slav: OpeningLine = {
       'c6',
       'c6 защищает d5 и не запирает слона c8. Это славянская защита.',
       'Защити d5 пешкой c.',
-      'e6 — отказанный гамбит из соседней линии: там слон c8 сидит дома. c6 оставляет слону диагональ наружу.',
+      'e6 — отказанный гамбит из урока «Отказанный ферзевый»: там слон c8 сидит дома. c6 оставляет слону диагональ наружу.',
       'На Nf3 выводи коня, потом можно забрать на c4.',
       [
         {
           san: 'e6',
-          why: 'e6 — отказанный ферзевый гамбит. Тоже наша схема, но в другой линии. Здесь играем c6.',
+          why: 'e6 — отказанный ферзевый гамбит, другой урок. Здесь играем c6.',
         },
       ],
     ),
@@ -1327,13 +1327,23 @@ export const OPENINGS: Opening[] = [
   },
   {
     id: 'queens',
-    name: 'Против 1.d4',
+    name: 'Отказанный ферзевый',
     description:
-      'd5 в ответ на d4. На c4 — отказанный гамбит ходом e6 или славянская ходом c6. На лондонскую — слон d6 и c5.',
+      'd5 на d4. На c4 — отказ ходом e6. На лондонскую — слон d6 и c5. Славянская (…c6) — отдельный урок.',
     side: 'black',
-    preview: '1.d4 d5 2.c4 e6/c6',
-    lines: [qgd, slav, vsLondon],
+    preview: '1.d4 d5 2.c4 e6',
+    lines: [qgd, vsLondon],
     anti: antiQueens,
+  },
+  {
+    id: 'slav',
+    name: 'Славянская защита',
+    description:
+      'd5 и c6 против ферзевого гамбита: слон c8 не запирается, выходит на f5. Классика за чёрных.',
+    side: 'black',
+    preview: '1.d4 d5 2.c4 c6',
+    lines: [slav],
+    anti: antiSlav,
   },
   ...EXTRA_OPENINGS,
   ...GM_OPENINGS,

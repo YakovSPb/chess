@@ -12,6 +12,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-italian',
     name: 'Блок 1 · Итальянская семья',
     description: 'База → двухконей → жертва на f7. Развитие и схемы; гамбит Эванса — в разделе «Гамбиты».',
+    flag: '🇮🇹',
     tracks: [
       {
         id: 'track-italian',
@@ -25,6 +26,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-scotch',
     name: 'Блок 2 · Шотландская семья',
     description: 'Четырёх коней → шотландская → шотландский гамбит.',
+    flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
     tracks: [
       {
         id: 'track-scotch',
@@ -38,6 +40,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-spanish',
     name: 'Блок 3 · Испанская семья',
     description: 'База → открытая → Маршалл → Берлин.',
+    flag: '🇪🇸',
     tracks: [
       {
         id: 'track-spanish',
@@ -51,6 +54,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-open-sharp',
     name: 'Блок 4 · Острые на e4 e5',
     description: 'Венская → русская → королевский гамбит.',
+    flag: '🇷🇺',
     tracks: [
       {
         id: 'track-open-sharp',
@@ -64,6 +68,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-d4-systems',
     name: 'Блок 5 · Системы на d4',
     description: 'Лондон → Колле → Йобава.',
+    flag: '🇬🇧',
     tracks: [
       {
         id: 'track-d4-systems',
@@ -77,6 +82,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-caro',
     name: 'Блок 6 · Каро и ранний …d5',
     description: 'Каро-Канн → Панов → скандинавская.',
+    flag: '🇩🇰',
     tracks: [
       {
         id: 'track-caro',
@@ -90,6 +96,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-french',
     name: 'Блок 7 · Французская семья',
     description: 'База → Винавер → Тарраш.',
+    flag: '🇫🇷',
     tracks: [
       {
         id: 'track-french',
@@ -101,14 +108,15 @@ export const CURRICULUM: CurriculumLevel[] = [
   },
   {
     id: 'block-queens',
-    name: 'Блок 8 · Ферзевый гамбит',
-    description: 'Отказ/славянская → принятый → полуславянская.',
+    name: 'Блок 8 · Ферзевый и славянская',
+    description: 'Отказ → славянская → принятый → полуславянская.',
+    flag: '🇷🇺',
     tracks: [
       {
         id: 'track-queens',
-        name: 'Путь ферзевых',
-        description: 'Классика d5, потом острые структуры.',
-        openingIds: ['queens', 'qga', 'semi-slav'],
+        name: 'Путь ферзевых и славянской',
+        description: 'e6, потом c6, затем острые структуры.',
+        openingIds: ['queens', 'slav', 'qga', 'semi-slav'],
       },
     ],
   },
@@ -116,6 +124,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-indian',
     name: 'Блок 9 · Индийские защиты',
     description: 'Нимцович → Бого → новоиндийская.',
+    flag: '🇮🇳',
     tracks: [
       {
         id: 'track-indian',
@@ -129,6 +138,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-hypermodern',
     name: 'Блок 10 · Гипермодерн на d4',
     description: 'Староиндийская → Грюнфельд → Бенони.',
+    flag: '🇮🇳',
     tracks: [
       {
         id: 'track-hypermodern',
@@ -142,6 +152,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-sicilian',
     name: 'Блок 11 · Сицилианская семья',
     description: 'База за чёрных → Алапин → дракон.',
+    flag: '🇮🇹',
     tracks: [
       {
         id: 'track-sicilian',
@@ -155,6 +166,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-flank',
     name: 'Блок 12 · Фланговые начала',
     description: 'Английское → Рети → голландская.',
+    flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     tracks: [
       {
         id: 'track-flank',
@@ -168,6 +180,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-modern-white',
     name: 'Блок 13 · Современные белые',
     description: 'Торре → каталон → Тромповский.',
+    flag: '🇪🇸',
     tracks: [
       {
         id: 'track-modern-white',
@@ -181,6 +194,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-flex-e4',
     name: 'Блок 14 · Гибкий ответ на e4',
     description: 'Пирц → современная → Алехин.',
+    flag: '🇦🇹',
     tracks: [
       {
         id: 'track-flex-e4',
@@ -194,6 +208,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-gm',
     name: 'Блок 15 · Гроссмейстерские фишки',
     description: 'Английская атака → Ботвинник → гамбит Морра.',
+    flag: '⭐',
     tracks: [
       {
         id: 'track-gm',
@@ -211,6 +226,7 @@ export const CURRICULUM: CurriculumLevel[] = [
     id: 'block-gambits',
     name: 'Эванс и жертвы',
     description: 'Жертвы пешек и учебные матовые атаки — не путать со школой спокойного развития.',
+    flag: '💣',
     tracks: [
       {
         id: 'track-gambits',

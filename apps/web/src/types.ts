@@ -62,6 +62,8 @@ export type CurriculumLevel = {
   id: string;
   name: string;
   description: string;
+  /** Эмодзи-флаг семьи дебюта (🇮🇹, 🇷🇺, …). */
+  flag?: string;
   tracks: CurriculumTrack[];
 };
 
