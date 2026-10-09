@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CURRICULUM } from '../data/curriculum';
+import { CURRICULUM, SIDE_BLOCK_IDS } from '../data/curriculum';
 import { getOpening } from '../data/openings';
 import {
   currentLesson,
@@ -91,9 +91,28 @@ export function HomePage() {
           </section>
         )}
 
-        {CURRICULUM.map((level) => (
-          <LevelBlock key={level.id} level={level} />
-        ))}
+        <div className="flex flex-col gap-8">
+          <p className="text-sm font-medium tracking-wide text-[var(--muted-foreground)] uppercase">
+            Школа · развитие и схемы
+          </p>
+          {CURRICULUM.filter((level) => !SIDE_BLOCK_IDS.has(level.id)).map((level) => (
+            <LevelBlock key={level.id} level={level} />
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-4 border-t border-[var(--chat-border)] pt-8">
+          <div>
+            <p className="text-sm font-medium tracking-wide text-[var(--muted-foreground)] uppercase">
+              Гамбиты
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+              Вне основной школы: жертвы и матовые атаки. Можно проходить параллельно.
+            </p>
+          </div>
+          {CURRICULUM.filter((level) => SIDE_BLOCK_IDS.has(level.id)).map((level) => (
+            <LevelBlock key={level.id} level={level} />
+          ))}
+        </div>
       </main>
     </div>
   );

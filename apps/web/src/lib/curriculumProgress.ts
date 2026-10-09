@@ -1,4 +1,4 @@
-import { CURRICULUM, findLesson, flatLessons, trackOf } from '../data/curriculum';
+import { CURRICULUM, SIDE_BLOCK_IDS, findLesson, flatLessons, trackOf } from '../data/curriculum';
 import { getOpening } from '../data/openings';
 import { PASS_STREAK, lineMastery } from './srs';
 import type { CurriculumLevel, CurriculumTrack, LessonStatus, Opening } from '../types';
@@ -104,9 +104,10 @@ export function isOpeningUnlocked(openingId: string): boolean {
   if (!level) return false;
 
   const levelIndex = CURRICULUM.findIndex((item) => item.id === level.id);
-  if (levelIndex > 0) {
+  if (levelIndex > 0 && !SIDE_BLOCK_IDS.has(level.id)) {
+    // Для боковых блоков (гамбиты) предыдущий школьный блок не нужен.
     const prevLevel = CURRICULUM[levelIndex - 1];
-    if (!isLevelCompleted(prevLevel)) return false;
+    if (!SIDE_BLOCK_IDS.has(prevLevel.id) && !isLevelCompleted(prevLevel)) return false;
   }
 
   const track = level.tracks.find((item) => item.id === place.trackId);
@@ -137,7 +138,7 @@ export function unlockHint(openingId: string): string {
   if (!level) return 'Урок недоступен.';
 
   const prevLvl = previousLevel(level.id);
-  if (prevLvl && !isLevelCompleted(prevLvl)) {
+  if (prevLvl && !SIDE_BLOCK_IDS.has(level.id) && !SIDE_BLOCK_IDS.has(prevLvl.id) && !isLevelCompleted(prevLvl)) {
     return `Сначала сдай уровень «${prevLvl.name}».`;
   }
 
@@ -173,9 +174,16 @@ export function levelProgress(level: CurriculumLevel): { done: number; total: nu
 }
 
 export function isLevelUnlocked(level: CurriculumLevel): boolean {
+  if (SIDE_BLOCK_IDS.has(level.id)) return true;
   const index = CURRICULUM.findIndex((item) => item.id === level.id);
   if (index <= 0) return true;
-  return isLevelCompleted(CURRICULUM[index - 1]);
+  const prev = CURRICULUM[index - 1];
+  // Боковой блок в середине/конце не должен запирать следующий школьный.
+  if (SIDE_BLOCK_IDS.has(prev.id)) {
+    const before = CURRICULUM.slice(0, index).reverse().find((item) => !SIDE_BLOCK_IDS.has(item.id));
+    return !before || isLevelCompleted(before);
+  }
+  return isLevelCompleted(prev);
 }
 
 /** Первый незавершённый открытый урок; иначе последний открытый. */

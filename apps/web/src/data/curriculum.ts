@@ -11,13 +11,13 @@ export const CURRICULUM: CurriculumLevel[] = [
   {
     id: 'block-italian',
     name: 'Блок 1 · Итальянская семья',
-    description: 'База → двухконей → жертва на f7 → гамбит Эванса.',
+    description: 'База → двухконей → жертва на f7. Развитие и схемы; гамбит Эванса — в разделе «Гамбиты».',
     tracks: [
       {
         id: 'track-italian',
         name: 'Путь по итальянской',
-        description: 'Спокойная игра, схемы, жертва, гамбит.',
-        openingIds: ['italian', 'two-knights', 'fegatello', 'evans'],
+        description: 'Спокойная игра, схемы, удар на f7.',
+        openingIds: ['italian', 'two-knights', 'fegatello'],
       },
     ],
   },
@@ -203,7 +203,27 @@ export const CURRICULUM: CurriculumLevel[] = [
       },
     ],
   },
+  /**
+   * Вне цепочки школы: острые гамбиты и матовые атаки.
+   * Открыт сразу — не блокирует и не требует сдачи блоков 1–15.
+   */
+  {
+    id: 'block-gambits',
+    name: 'Эванс и жертвы',
+    description: 'Жертвы пешек и учебные матовые атаки — не путать со школой спокойного развития.',
+    tracks: [
+      {
+        id: 'track-gambits',
+        name: 'Гамбит Эванса',
+        description: 'Мат с жертвой ферзя и ответы на разные защиты.',
+        openingIds: ['evans'],
+      },
+    ],
+  },
 ];
+
+/** Блоки вне основной цепочки школы (сразу открыты). */
+export const SIDE_BLOCK_IDS = new Set(['block-gambits']);
 
 export function flatLessons(): { levelId: string; trackId: string; openingId: string; indexInTrack: number }[] {
   const result: { levelId: string; trackId: string; openingId: string; indexInTrack: number }[] = [];
